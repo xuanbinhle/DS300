@@ -39,7 +39,42 @@ def clean_description(description: str) -> str:
         new_description.append(sub_desc)
 
     return "\n".join(new_description)
-        
+
+def clean_bookname(name_book: str) -> str:
+
+    """
+    ' Sách - Thuyết Phục Bất Kỳ Ai' => 'Sách - Thuyết Phục Bất Kỳ Ai'
+    'Sách Đời Ngắn Đừng Ngủ Dài ( free bookcare)' => 'Sách Đời Ngắn Đừng Ngủ Dài'
+    'Sách - Trở về nhà (Nhã Nam) (tặng kèm bookmark thiết kế)' => 'Sách - Trở về nhà'
+    'Sách - Dám Bị Ghét - Free Book Care' => 'Sách - Dám Bị Ghét'
+    'Sách Tịch Tịnh - First News' => 'Sách Tịch Tịnh'
+    """
+    name_book = name_book.lower()
+    name_book = name_book.strip()
+    name_book = name_book.split("(")[0].strip()
+
+    provider_name = ['first news', '1980books', 'alphabooks - bảnquyền', 'alphabooks', 'nhã nam official', 'firstnews', '1980 books', 'bản quyền', 'free book care', 'thái hà books']
+    for name in provider_name:
+        if name_book.endswith(name):
+            name_book = (name_book.split(name)[-2:])[0]
+            name_book = name_book.rstrip().rstrip('-').rstrip()
+            break
+
+    # Remove text 'Tặng kèm bookmark thiết kế'
+    if name_book.endswith('tặng kèm bookmark thiết kế'):
+        name_book = name_book.replace('tặng kèm bookmark thiết kế', '').rstrip().rstrip('-').rstrip()
+    
+    """
+    sách - đọc sách - viết sách - làm sách => sách đọc sách - viết sách - làm sách
+    """
+    # Chuẩn hóa tên sách
+    if not name_book.startswith('sách'):
+        name_book = 'sách ' + name_book
+    elif name_book.startswith('sách -'):
+        name_book = name_book.replace('sách -', 'sách', 1).strip()
+    elif name_book.startswith('sách:'):
+        name_book = name_book.replace('sách:', 'sách', 1).strip()
+    return name_book
 
 if __name__ == '__main__':
     input_file = Path(__file__).parent.parent / 'data' / "raw" / 'books.csv'
@@ -48,6 +83,10 @@ if __name__ == '__main__':
         print(f"Input file {input_file} does not exist.")
     else:
         df = pd.read_csv(input_file)
-        cleaned_df = df[~df["description"].isna()]
+        remove_combo_mask = ~df['product_name'].str.contains('combo', case=False, na=False)
+        df_no_combo = df[remove_combo_mask].copy()
+        df_no_combo['product_name'] = df_no_combo['product_name'].apply(clean_bookname)
+
+        cleaned_df = df_no_combo[~df_no_combo["description"].isna()].copy()
         cleaned_df['description'] = cleaned_df['description'].apply(clean_description)
         cleaned_df.to_csv(output_file, index=False)

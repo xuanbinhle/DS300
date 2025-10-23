@@ -39,9 +39,8 @@ def clean_description(description: str) -> str:
         new_description.append(sub_desc)
 
     return "\n".join(new_description)
-
+        
 def clean_bookname(name_book: str) -> str:
-
     """
     ' Sách - Thuyết Phục Bất Kỳ Ai' => 'Sách - Thuyết Phục Bất Kỳ Ai'
     'Sách Đời Ngắn Đừng Ngủ Dài ( free bookcare)' => 'Sách Đời Ngắn Đừng Ngủ Dài'
@@ -74,6 +73,7 @@ def clean_bookname(name_book: str) -> str:
         name_book = name_book.replace('sách -', 'sách', 1).strip()
     elif name_book.startswith('sách:'):
         name_book = name_book.replace('sách:', 'sách', 1).strip()
+    
     return name_book
 
 if __name__ == '__main__':

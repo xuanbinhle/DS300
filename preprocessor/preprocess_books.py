@@ -40,6 +40,24 @@ def clean_description(description: str) -> str:
 
     return "\n".join(new_description)
         
+def clean_bookname(name_book: str) -> str:
+    """
+    ' Sách - Thuyết Phục Bất Kỳ Ai' => 'Sách - Thuyết Phục Bất Kỳ Ai'
+    'Sách Đời Ngắn Đừng Ngủ Dài ( free bookcare)' => 'Sách Đời Ngắn Đừng Ngủ Dài'
+    'Sách - Trở về nhà (Nhã Nam) (tặng kèm bookmark thiết kế)' => 'Sách - Trở về nhà'
+    'Sách - Dám Bị Ghét - Free Book Care' => 'Sách - Dám Bị Ghét'
+    'Sách Tịch Tịnh - First News' => 'Sách Tịch Tịnh'
+    """
+    name_book = name_book.strip()
+    name_book = name_book.split("(")[0].strip()
+
+    provider_name = ['First News', '1980Books', 'Alphabooks', 'Nhã Nam Official', 'FirstNews']
+    for name in provider_name:
+        if name in name_book:
+            name_book = name_book.split(name)[0]
+            name_book = re.sub(r'\s*-\s*.*$', '', name_book)
+    
+    return name_book
 
 if __name__ == '__main__':
     input_file = Path(__file__).parent.parent / 'data' / "raw" / 'books.csv'

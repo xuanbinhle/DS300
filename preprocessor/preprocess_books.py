@@ -62,7 +62,7 @@ def clean_description(description: str) -> str:
             continue
         
         # Loại bỏ thông tin kích thước sách
-        pattern_size = r"\d+(?:.\d+)?\s*x\s*\d+(?:.\d+)?\s*(?:cm|mm|m|inch|inches)?"
+        pattern_size = r"\d+(?:.\d+)?\s*x\s*\d+(?:.\d+)?\s*(?:cm|mm|m|inch|inches|gr)?"
         if re.search(pattern_size, sub_desc, re.IGNORECASE):
             continue
         
@@ -111,7 +111,7 @@ def clean_description(description: str) -> str:
             continue
         
         # Loại bỏ thông tin ngôn ngữ
-        pattern_language = r"Ngôn ngữ( Sách)?\s*[t:\-]?\s*[\w\s,.-]*"
+        pattern_language = r"Ngôn ngữ( Sách)?\s*[:\-]?\s*[\w\s,.-]*"
         if re.search(pattern_language, sub_desc, re.IGNORECASE):
             continue
         

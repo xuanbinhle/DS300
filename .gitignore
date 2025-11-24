@@ -3,3 +3,4 @@
 *.exe
 .devcontainer/
 *.pkl
+__pycache__/

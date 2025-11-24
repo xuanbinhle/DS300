@@ -1,5 +1,8 @@
 *.zip
 *_env/
+*_venv/
 *.exe
 .devcontainer/
 *.pkl
+__pycache__/
+data/book_images

@@ -67,7 +67,7 @@ def clean_description(description: str) -> str:
             continue
         
         # Loại bỏ thông tin chi tiết về sách (không chứa nội dung)
-        pattern_info_book = r"^\s*[-•*\d.]*?\s*(Tóm tắt nội dung|Đơn vị liên kết|Thể loại|Thương hiệu|Định dạng bìa|Thông tin sách|Thông tin mô tả|Thông tin phát hành|Thông tin tác giả|Mã sản phẩm|Khối lượng|Tên tác giả|Về tác giả|GIỚI THIỆU|Tên nhà cung cấp|Nhà cung cấp|Quy cách|Người dịch|Bìa|Hình thức|Xuất xứ|In lần thứ|Khổ sách|Thông tin xuất bản|Thông tin chi tiết|Thông tin sản phẩm|Mô tả sản phẩm|Barcode|Mã EAN|Số trang|Nhà xuất bản|NXB liên kết|Đơn vị phát hành|Công ty phát hành|Nhà phát hành|Tác giả|Dịch giả|Kích thước|Ngày xuất bản|Ngày XB|Năm xuất bản|Năm XB|Loại bìa|Mã Sách|Mã ISBN|Số ISBN|ISBN|NXB|NPH|Giá bìa|SKU|Trọng lượng)\s*[t:\-]?\s*[\d\w\s,.-]*"
+        pattern_info_book = r"^\s*[-•●*\d.]*?\s*(Tóm tắt nội dung|Đơn vị liên kết|Thể loại|Thương hiệu|Định dạng bìa|Thông tin sách|Thông tin mô tả|Thông tin phát hành|Thông tin tác giả|Mã sản phẩm|Khối lượng|Tên tác giả|Về tác giả|GIỚI THIỆU|Tên nhà cung cấp|Nhà cung cấp|Quy cách|Người dịch|Bìa|Hình thức|Xuất xứ|In lần thứ|Khổ sách|Thông tin xuất bản|Thông tin chi tiết|Thông tin sản phẩm|Mô tả sản phẩm|Barcode|Mã EAN|Số trang|Nhà xuất bản|NXB liên kết|Đơn vị phát hành|Công ty phát hành|Nhà phát hành|Tác giả|Dịch giả|Kích thước|Ngày xuất bản|Ngày XB|Năm xuất bản|Năm XB|Loại bìa|Mã Sách|Mã ISBN|Số ISBN|ISBN|NXB|NPH|Giá bìa|SKU|Trọng lượng)\s*[t:\-]?\s*[\d\w\s,.-]*"
         if re.search(pattern_info_book, sub_desc, re.IGNORECASE):
             continue
         

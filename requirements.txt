@@ -7,3 +7,5 @@ icecream
 scikit-learn
 transformers
 SentencePiece
+SQLAlchemy
+psycopg2-binary

@@ -1,0 +1,41 @@
+# general
+use_gpu: True
+seed: [999]
+
+# multi-modal raw features
+dataset_dir: './data/features'
+filter_out_cod_start_users: True
+is_multimodal_model: True
+
+checkpoint_dir: 'saved'
+save_recommended_topk: True
+recommend_topk: 'recommend_topk/'
+
+weight_decay: 0.0
+req_training: True
+
+# training settings
+epochs: 1000
+stopping_step: 20
+train_batch_size: 2048
+learner: adam
+learning_rate: 0.001
+learning_rate_scheduler: [1.0, 50]
+eval_step: 1
+
+training_neg_sample_num: 1
+use_neg_sampling: True
+use_full_sampling: False
+NEG_PREFIX: neg__
+
+# evaluation settings
+metrics: ["Recall", "NDCG", "Precision", "MAP"]
+topk: [5, 10, 20, 50]
+valid_metric: Recall@20
+eval_batch_size: 4096
+
+# use pretrained extract text/image feature
+end2end: False
+
+# iteration parameters
+hyper_parameters: ["seed"]

@@ -7,3 +7,4 @@ icecream
 scikit-learn
 transformers
 SentencePiece
+PyYAML

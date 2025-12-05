@@ -40,8 +40,8 @@ def reindexing(df: pd.DataFrame, user2idx, item2idx):
 
 if __name__ == '__main__':
     K = 3
-    books_df = pd.read_csv(r"data/preprocessed/cleaned_books.csv")
-    reviews_df = pd.read_csv(r"data/raw/reviews.csv")
+    books_df = pd.read_csv(r"data/preprocessed/new_cleaned_books.csv")
+    reviews_df = pd.read_csv(r"data/preprocessed/cleaned_reviews.csv")
     print(f"Books Shape: {books_df.shape}, Reviews Shape: {reviews_df.shape}")
     
     downloaded_image_ids = []
@@ -49,11 +49,11 @@ if __name__ == '__main__':
         downloaded_image_ids.append(int(os.path.splitext(os.path.basename(file))[0])) 
     
     filtered_books_df, item2idx = multimodal_filtering(books_df, downloaded_image_ids)
-    filtered_books_df.to_csv("./data/features/final_cleaned_books.csv", index=False)
+    # filtered_books_df.to_csv("./data/features/final_cleaned_books.csv", index=False)
     print(f"Multimodal Filtering - Books Shape: {filtered_books_df.shape}")
     
     filtered_reviews_df, user2idx = core_k_filtering(reviews_df, K, item2idx)
     print(f"Core-{K} Filtering - Reviews Shape: {filtered_reviews_df.shape}")
     
     interaction_df = reindexing(filtered_reviews_df, user2idx, item2idx)
-    interaction_df.to_csv("./data/features/final_interactions.csv", index=False)
+    # interaction_df.to_csv("./data/features/final_interactions.csv", index=False)

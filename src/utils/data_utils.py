@@ -11,19 +11,33 @@ import torch
 import importlib
 import random
 
-def get_model(model_name):
+# BUG: chưa call được model từ folder models
+def get_model(model_name: str):
     r"""Automatically select model class based on model name
     Args:
-        model_name (str): model name
+        model_name (str): model name (e.g. "MyModel")
     Returns:
-        Recommender: model class
+        type: model class (e.g. <class models.mymodel.MyModel>)
     """
-    model_file_name = model_name.lower()
-    module_path = '.'.join(['models', model_file_name])
-    if importlib.util.find_spec(module_path, __name__):
-        model_module = importlib.import_module(module_path, __name__)
 
-    model_class = getattr(model_module, model_name)
+    model_file_name = model_name.lower()
+    module_path = f"models.{model_file_name}"
+
+    # Check if module exists
+    spec = importlib.util.find_spec(module_path)
+    if spec is None:
+        raise ImportError(f"Cannot find module '{module_path}' (expected under 'models/')")
+
+    # Import the module
+    model_module = importlib.import_module(module_path)
+
+    # Get the class from the module
+    try:
+        model_class = getattr(model_module, model_name)
+    except AttributeError:
+        raise ImportError(
+            f"Module '{module_path}' does not define a class '{model_name}'"
+        )
     return model_class
 
 

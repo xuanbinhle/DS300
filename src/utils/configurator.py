@@ -74,6 +74,7 @@ class Config(object):
         if mg:
             file_list.append(os.path.join(cur_dir, "mg.yaml"))
 
+        print(file_list)
         hyper_parameters = []
         for file in file_list:
             if os.path.isfile(file):

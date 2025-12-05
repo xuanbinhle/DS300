@@ -78,7 +78,7 @@ class RecDataset(Dataset):
         return self.df.iloc[idx]
     
     def __str__(self):
-        info = [self.dataset_name]
+        info = []
         self.inter_num = len(self.df)
         uni_u = pd.unique(self.df[self.uid_field])
         uni_i = pd.unique(self.df[self.iid_field])

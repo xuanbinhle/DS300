@@ -7,7 +7,7 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-from metrics import metrics_dict
+from utils.metrics import metrics_dict
 from torch.nn.utils.rnn import pad_sequence
 
 # These metrics are typical in topk recommendations

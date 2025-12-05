@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 
 from time import time
 
-from utils import early_stopping, dict2str
-from topk_evaluator import TopKEvaluator
+from utils.data_utils import early_stopping, dict2str
+from utils.topk_evaluator import TopKEvaluator
 
 
 class AbstractTrainer(object):
@@ -244,8 +244,8 @@ class Trainer(AbstractTrainer):
 
             self.train_loss_dict[epoch_idx] = sum(train_loss) if isinstance(train_loss, tuple) else train_loss
             training_end_time = time()
-            train_loss_output = \
-                self._generate_train_loss_output(epoch_idx, training_start_time, training_end_time, train_loss)
+            train_loss_output = self._generate_train_loss_output(epoch_idx, training_start_time, training_end_time, train_loss)
+            
             post_info = self.model.post_epoch_processing()
             if verbose:
                 print(train_loss_output)

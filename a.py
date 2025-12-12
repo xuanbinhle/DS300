@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     books_df = pd.concat([unique_df, new_duplicate_df], axis=0)
     # books_df.to_csv("./data/preprocessed/new_cleaned_books.csv", index=False)
-    
+     
     mapping_ids = duplicate_df.set_index("product_id")['new_id_product'].to_dict()
     reviews_df['product_id'] = reviews_df['product_id'].map(mapping_ids).fillna(reviews_df['product_id']).astype(int)
     # reviews_df.to_csv("./data/preprocessed/cleaned_reviews.csv", index=False)

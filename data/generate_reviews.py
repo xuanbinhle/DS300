@@ -1,5 +1,6 @@
 import os
 import json
+from tqdm import tqdm
 import pandas as pd
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
@@ -7,10 +8,14 @@ from langchain.output_parsers import StructuredOutputParser, ResponseSchema
 from langchain_core.prompts import PromptTemplate
 
 load_dotenv()
+        
 
-def write_file_json(file_name, output):
-    with open(file_name, 'w', encoding='utf-8') as f:
-        json.dump(output, f, ensure_ascii=False, indent=4)
+def write_file_json(filename, data):
+    with open(filename, 'w', encoding='utf-8') as f:
+        for item in data:
+            line = json.dumps(item, ensure_ascii=False)  # giữ Unicode, không \\u
+            f.write(line + "\n")
+
 
 # 1. Define the JSON structure we want
 response_schemas = [
@@ -76,11 +81,13 @@ if __name__ == '__main__':
     item_counts = reviews_df.groupby('product_id')['customer_id'].nunique()
     valid_items = item_counts[item_counts >= 5].index
 
-    filtered_books_df = books_df[~books_df['product_id'].isin(valid_items)]
+    filtered_books_df = books_df[~books_df['product_id'].isin(valid_items)].reset_index(drop=True)
 
-    output_path = "./data/generated_reviews.json"
+    output_path = "./data/augmented_reviews.jsonl"
     appendix_reviews = [] if not os.path.exists(output_path) else json.load(open(output_path, 'r', encoding='utf-8'))
-    for idx, row in filtered_books_df.iterrows():
+    for idx, row in tqdm(filtered_books_df.iterrows(), total=len(filtered_books_df), desc='Generating Reviews'):
+        if idx == 0:
+            continue
         product_name = row["product_name"]
         product_id = row["product_id"]
         description = row.get("description", "")
@@ -92,16 +99,23 @@ if __name__ == '__main__':
                     "product_name": product_name,
                     "product_id": product_id,
                     "description": description,
-                    "quantity": 5,
+                    "quantity": 16,
                     "star_distribution": (
-                        "1 review 1 sao, 1 review 2 sao, "
-                        "1 review 3 sao, 1 review 4 sao, 1 review 5 sao"
+                        "4 review 1 sao, 4 review 2 sao, "
+                        "4 review 3 sao, 4 review 4 sao, "
                     )
                 }
             )
-            if isinstance(result, list):
+            if isinstance(result, dict):
+                appendix_reviews.extend(result['reviews'])
+                write_file_json(output_path, appendix_reviews)
+            elif isinstance(result, list):
                 appendix_reviews.extend(result)
                 write_file_json(output_path, appendix_reviews)
+            else:
+                print(result)
+            
+            print(f"✅ Generating Review Successful - ProductID: {product_id}")
         
         except Exception as e:
             print(f"❌ Error for {product_id}: {e}")

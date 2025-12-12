@@ -41,7 +41,7 @@ def reindexing(df: pd.DataFrame, user2idx, item2idx):
 if __name__ == '__main__':
     K = 3
     books_df = pd.read_csv(r"data/preprocessed/new_cleaned_books.csv")
-    reviews_df = pd.read_csv(r"data/preprocessed/cleaned_reviews.csv")
+    reviews_df = pd.read_csv(r"data/preprocessed/new_cleaned_reviews_v2.csv")
     print(f"Books Shape: {books_df.shape}, Reviews Shape: {reviews_df.shape}")
     
     downloaded_image_ids = []

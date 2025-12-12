@@ -87,9 +87,8 @@ class GeneralRecommender(AbstractRecommender):
         self.n_items = self.dataset.get_item_num()
 
         # ====== 3. Thông tin training cơ bản ======
-        self.batch_size = config.get('train_batch_size', 256)
-        # Cho phép config['device'] là 'cuda' / 'cpu' / 'cuda:0' ...
-        self.device = torch.device(config.get('device', 'cpu'))
+        self.batch_size = config['train_batch_size']
+        self.device = torch.device(config['device'])
 
         # ====== 4. Side features (multimodal) ======
         #   v_feat: vision feature [n_items, d_v]
@@ -98,7 +97,6 @@ class GeneralRecommender(AbstractRecommender):
         self.t_feat: torch.Tensor | None = None
         self.v_dim: int | None = None
         self.t_dim: int | None = None
-
         self._load_side_features()
 
     # ---------------------------------------------------------------------
@@ -106,37 +104,31 @@ class GeneralRecommender(AbstractRecommender):
     # ---------------------------------------------------------------------
     def _load_side_features(self):
         """Load vision/text features từ .npy nếu là model multimodal và không end2end."""
-        end2end = self.config.get('end2end', False)
-        is_multimodal = self.config.get('is_multimodal_model', False)
 
-        if end2end or not is_multimodal:
-            # Model sẽ tự encode image/text, không cần precomputed features
-            return
-
-        dataser_dir = self.config['dataset_dir']
-        v_feat_file = self.config.get('vision_feature_file', None)
-        t_feat_file = self.config.get('text_feature_file', None)
-
-        # Load vision features nếu có
+        dataset_dir = self.config['dataset_dir']
+        v_feat_file = self.config['vision_feature_file']
+        t_feat_file = self.config['text_feature_file']
+        
+        # Load vision features
         if v_feat_file is not None:
-            v_feat_path = os.path.join(dataser_dir, v_feat_file)
+            v_feat_path = os.path.join(dataset_dir, v_feat_file)
             if os.path.isfile(v_feat_path):
                 v_arr = np.load(v_feat_path, allow_pickle=True)
                 v_tensor = torch.from_numpy(v_arr).float().to(self.device)
                 self.v_feat = v_tensor
                 self.v_dim = v_tensor.size(-1)
 
-        # Load text features nếu có
+        # Load text features
         if t_feat_file is not None:
-            t_feat_path = os.path.join(dataser_dir, t_feat_file)
+            t_feat_path = os.path.join(dataset_dir, t_feat_file)
             if os.path.isfile(t_feat_path):
                 t_arr = np.load(t_feat_path, allow_pickle=True)
                 t_tensor = torch.from_numpy(t_arr).float().to(self.device)
                 self.t_feat = t_tensor
                 self.t_dim = t_tensor.size(-1)
 
-        # Nếu config nói là multimodal mà không load gì thì báo lỗi
-        if self.config.get('is_multimodal_model', False) and self.v_feat is None and self.t_feat is None:
+        # Nếu config multimodal == True mà không load => báo lỗi
+        if self.config['is_multimodal_model'] and self.v_feat is None and self.t_feat is None:
             raise ValueError(
                 f"[GeneralRecommender] Multimodal model nhưng cả vision_feature_file "
                 f"và text_feature_file đều không load được. Kiểm tra đường dẫn hoặc config."

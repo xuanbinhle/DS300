@@ -6,6 +6,7 @@ Utility functions
 ##########################
 """
 
+import sys
 import numpy as np
 import torch
 import importlib
@@ -30,7 +31,6 @@ def get_model(model_name: str):
 
     # Import the module
     model_module = importlib.import_module(module_path)
-
     # Get the class from the module
     try:
         model_class = getattr(model_module, model_name)

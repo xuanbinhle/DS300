@@ -5,8 +5,3 @@ RATING_FIELD: rating
 
 filter_out_cod_start_users: True
 interation_filename: 'final_interactions.csv'
-
-# name of features
-vision_feature_file: 'image_feat.npy'
-text_feature_file: 'text_feat.npy'
-user_graph_dict_file: 'user_graph_dict.npy'

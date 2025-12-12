@@ -54,7 +54,7 @@ class EmbLoss(nn.Module):
 class L2Loss(nn.Module):
     def __init__(self):
         super(L2Loss, self).__init__()
-
+        
     def forward(self, *embeddings):
         l2_loss = torch.zeros(1).to(embeddings[-1].device)
         for embedding in embeddings:

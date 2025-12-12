@@ -9,7 +9,7 @@ from itertools import product
 from utils.dataset import RecDataset
 from utils.dataloader import TrainDataLoader, EvalDataLoader
 from utils.configurator import Config
-from utils.data_utils import init_seed, get_model, dict2str
+from utils.utils import init_seed, get_model, dict2str
 from utils.trainer import Trainer
 import platform
 import os

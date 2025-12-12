@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 from time import time
 
-from utils.data_utils import early_stopping, dict2str
+from utils.utils import early_stopping, dict2str
 from utils.topk_evaluator import TopKEvaluator
 
 

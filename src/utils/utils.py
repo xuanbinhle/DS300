@@ -12,7 +12,6 @@ import torch
 import importlib
 import random
 
-# BUG: chưa call được model từ folder models
 def get_model(model_name: str):
     r"""Automatically select model class based on model name
     Args:
@@ -20,25 +19,21 @@ def get_model(model_name: str):
     Returns:
         type: model class (e.g. <class models.mymodel.MyModel>)
     """
-
-    model_file_name = model_name.lower()
-    module_path = f"models.{model_file_name}"
-
-    # Check if module exists
-    spec = importlib.util.find_spec(module_path)
+    # Import the package-level registry in models/__init__.py
+    package_path = "models"
+    spec = importlib.util.find_spec(package_path)
     if spec is None:
-        raise ImportError(f"Cannot find module '{module_path}' (expected under 'models/')")
+        raise ImportError("Cannot find package 'models'")
 
-    # Import the module
-    model_module = importlib.import_module(module_path)
-    # Get the class from the module
+    models_pkg = importlib.import_module(package_path)
+
+    # Classes must be exposed in models/__init__.py (e.g., from .bpr import BPR)
     try:
-        model_class = getattr(model_module, model_name)
+        return getattr(models_pkg, model_name)
     except AttributeError:
         raise ImportError(
-            f"Module '{module_path}' does not define a class '{model_name}'"
+            f"Package '{package_path}' does not expose a class '{model_name}' in __init__.py"
         )
-    return model_class
 
 
 def init_seed(seed):

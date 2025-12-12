@@ -5,7 +5,7 @@ seed: [999]
 # multi-modal raw features
 dataset_dir: './data/features'
 filter_out_cod_start_users: True
-is_multimodal_model: False
+is_multimodal_model: True
 
 checkpoint_dir: 'saved'
 save_recommended_topk: True

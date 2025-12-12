@@ -10,3 +10,4 @@ SentencePiece
 PyYAML
 langchain==0.3.27
 langchain-openai==0.3.35
+torch_geometric

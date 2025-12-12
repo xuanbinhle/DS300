@@ -70,11 +70,10 @@ class Config(object):
         cur_dir = config_dict['config_dir']
         file_list.append(os.path.join(cur_dir, "overall.yaml"))
         file_list.append(os.path.join(cur_dir, "dataset.yaml"))
-        file_list.append(os.path.join(cur_dir, "model", f"{config_dict['model']}.yaml"))
+        file_list.append(os.path.join(cur_dir, "model", f"{config_dict['model'].lower()}.yaml"))
         if mg:
             file_list.append(os.path.join(cur_dir, "mg.yaml"))
 
-        print(file_list)
         hyper_parameters = []
         for file in file_list:
             if os.path.isfile(file):

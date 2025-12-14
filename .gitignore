@@ -7,3 +7,5 @@
 __pycache__/
 data/book_images
 *.env
+*.jsonl
+chk_kafka_out/

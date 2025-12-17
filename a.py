@@ -69,5 +69,5 @@ if __name__ == '__main__':
         # Update reviews_df
         reviews_df = pd.concat([reviews_df, group], ignore_index=True)
     
-    reviews_df = reviews_df.drop_duplicates(['customer_id', 'product_id'])
-    reviews_df.to_csv("./data/preprocessed/new_cleaned_reviews.csv", index=False)
+    # reviews_df = reviews_df.drop_duplicates(['customer_id', 'product_id'])
+    # reviews_df.to_csv("./data/preprocessed/new_cleaned_reviews.csv", index=False)

@@ -27,14 +27,24 @@ class VBPR(GeneralRecommender):
         # define layers and loss
         self.u_embedding = nn.Parameter(nn.init.xavier_uniform_(torch.empty(self.n_users, self.u_embedding_size * 2)))
         self.i_embedding = nn.Parameter(nn.init.xavier_uniform_(torch.empty(self.n_items, self.i_embedding_size)))
+        
+        # Store normalized features (no computation graph)
         if self.v_feat is not None and self.t_feat is not None:
-            self.item_raw_features = torch.cat((self.t_feat, self.v_feat), -1)
+            self.t_feat_norm = F.normalize(self.t_feat, p=2, dim=-1).detach()
+            self.v_feat_norm = F.normalize(self.v_feat, p=2, dim=-1).detach()
+            
+            self.text_linear = nn.Linear(self.t_feat_norm.shape[1], self.i_embedding_size)
+            self.vison_linear = nn.Linear(self.v_feat_norm.shape[1], self.i_embedding_size)
+            self.fusion_layer = nn.Linear(self.i_embedding_size * 2, self.i_embedding_size)
         elif self.v_feat is not None:
-            self.item_raw_features = self.v_feat
+            self.v_feat_norm = F.normalize(self.v_feat, p=2, dim=-1).detach()
+            self.text_linear = None
+            self.vison_linear = nn.Linear(self.v_feat_norm.shape[1], self.i_embedding_size)
         else:
-            self.item_raw_features = self.t_feat
+            self.t_feat_norm = F.normalize(self.t_feat, p=2, dim=-1).detach()
+            self.text_linear = nn.Linear(self.t_feat_norm.shape[1], self.i_embedding_size)
+            self.vison_linear = None
 
-        self.item_linear = nn.Linear(self.item_raw_features.shape[1], self.i_embedding_size)
         self.loss = BPRLoss()
         self.reg_loss = EmbLoss()
 
@@ -48,33 +58,18 @@ class VBPR(GeneralRecommender):
             nn.init.xavier_normal_(module.weight)
             if module.bias is not None:
                 nn.init.zeros_(module.bias)
-        
-    def get_user_embedding(self, user):
-        r""" Get a batch of user embedding tensor according to input user's id.
-
-        Args:
-            user (torch.LongTensor): The input tensor that contains user's id, shape: [batch_size, ]
-
-        Returns:
-            torch.FloatTensor: The embedding tensor of a batch of user, shape: [batch_size, embedding_size]
-        """
-        return self.u_embedding[user, :]
-
-    def get_item_embedding(self, item):
-        r""" Get a batch of item embedding tensor according to input item's id.
-
-        Args:
-            item (torch.LongTensor): The input tensor that contains item's id, shape: [batch_size, ]
-
-        Returns:
-            torch.FloatTensor: The embedding tensor of a batch of item, shape: [batch_size, embedding_size]
-        """
-        return self.item_embedding[item, :]
 
     def forward(self, dropout=0.0):
-        item_embeddings = self.item_linear(self.item_raw_features)
-        item_embeddings = torch.cat((self.i_embedding, item_embeddings), -1)
-
+        # Compute item features in forward pass to avoid graph reuse issues
+        if self.text_linear is not None and self.vison_linear is not None:
+            combined_features = torch.cat((self.text_linear(self.t_feat_norm), self.vison_linear(self.v_feat_norm)), dim=-1)
+            item_raw_features = self.fusion_layer(combined_features)
+        elif self.vison_linear is not None:
+            item_raw_features = self.vison_linear(self.v_feat_norm)
+        else:
+            item_raw_features = self.text_linear(self.t_feat_norm)
+            
+        item_embeddings = torch.cat((self.i_embedding, item_raw_features), -1)
         user_e = F.dropout(self.u_embedding, dropout)
         item_e = F.dropout(item_embeddings, dropout)
         return user_e, item_e

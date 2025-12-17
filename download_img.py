@@ -17,7 +17,7 @@ def download_images(image_url: str, id_book: str, image_dir: str):
         
 if __name__ == '__main__':
     image_dir = "./data/book_images"
-    books_df = pd.read_csv("./data/preprocessed/new_cleaned_books.csv")
+    books_df = pd.read_csv("./data/features/final_cleaned_books.csv")
     
     os.makedirs(image_dir, exist_ok=True)
     books_df[['product_id', 'image']].apply(

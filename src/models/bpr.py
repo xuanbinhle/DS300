@@ -42,28 +42,6 @@ class BPR(GeneralRecommender):
             if module.bias is not None:
                 nn.init.zeros_(module.bias)
 
-    def get_user_embedding(self, user):
-        r""" Get a batch of user embedding tensor according to input user's id.
-
-        Args:
-            user (torch.LongTensor): The input tensor that contains user's id, shape: [batch_size, ]
-
-        Returns:
-            torch.FloatTensor: The embedding tensor of a batch of user, shape: [batch_size, embedding_size]
-        """
-        return self.user_embedding(user)
-
-    def get_item_embedding(self, item):
-        r""" Get a batch of item embedding tensor according to input item's id.
-
-        Args:
-            item (torch.LongTensor): The input tensor that contains item's id, shape: [batch_size, ]
-
-        Returns:
-            torch.FloatTensor: The embedding tensor of a batch of item, shape: [batch_size, embedding_size]
-        """
-        return self.item_embedding(item)
-
     def forward(self, dropout=0.0):
         user_e = F.dropout(self.user_embedding.weight, dropout)
         item_e = F.dropout(self.item_embedding.weight, dropout)
@@ -84,7 +62,7 @@ class BPR(GeneralRecommender):
         user_embeddings, item_embeddings = self.forward()
         user_e = user_embeddings[user, :]
         pos_e = item_embeddings[pos_item, :]
-        neg_e = self.get_item_embedding(neg_item)
+        neg_e = item_embeddings[neg_item, :]
         
         pos_item_score, neg_item_score = torch.mul(user_e, pos_e).sum(dim=1), torch.mul(user_e, neg_e).sum(dim=1)
         mf_loss = self.loss(pos_item_score, neg_item_score)
@@ -94,8 +72,9 @@ class BPR(GeneralRecommender):
 
     def full_sort_predict(self, interaction):
         user = interaction[0]
-        user_e = self.get_user_embedding(user)
-        all_item_e = self.item_embedding.weight
+        user_embeddings, item_embeddings = self.forward()
+        user_e = user_embeddings[user, :]
+        all_item_e = item_embeddings
         score = torch.matmul(user_e, all_item_e.transpose(0, 1))    # n_users * n_items
 
         return score

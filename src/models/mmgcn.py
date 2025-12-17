@@ -23,6 +23,7 @@ class MMGCN(GeneralRecommender):
         self.num_item = self.n_items
         num_user = self.n_users
         num_item = self.n_items
+        
         dim_x = config['embedding_size']
         num_layer = config['n_layers']
         batch_size = config['train_batch_size']         # not used
@@ -49,27 +50,28 @@ class MMGCN(GeneralRecommender):
                              self.aggr_mode, self.concate, num_layer=num_layer, has_id=has_id, device=self.device)
             self.num_modal += 1
 
-        self.id_embedding = nn.init.xavier_normal_(torch.rand((num_user+num_item, dim_x), requires_grad=True)).to(self.device)
+        self.id_embedding = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x), requires_grad=True)).to(self.device)
         self.result = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x))).to(self.device)
 
     def pack_edge_index(self, inter_mat):
         rows = inter_mat.row
         cols = inter_mat.col + self.n_users
-        # ndarray([598918, 2]) for ml-imdb
         return np.column_stack((rows, cols))
 
     def forward(self):
-        representation = None
+        """Compute final user+item representations by averaging available modalities."""
+        reps = []
+
         if self.v_feat is not None:
-            representation = self.v_gcn(self.v_feat, self.id_embedding)
+            reps.append(self.v_gcn(self.v_feat, self.id_embedding))
+
         if self.t_feat is not None:
-            if representation is None:
-                representation = self.t_gcn(self.t_feat, self.id_embedding)
-            else:
-                representation += self.t_gcn(self.t_feat, self.id_embedding)
+            reps.append(self.t_gcn(self.t_feat, self.id_embedding))
 
-        representation /= self.num_modal
+        if not reps:
+            raise RuntimeError("MMGCN.forward(): no modality features found (v_feat and t_feat are both None).")
 
+        representation = sum(reps) / len(reps)
         self.result = representation
         return representation
 
@@ -85,6 +87,7 @@ class MMGCN(GeneralRecommender):
         out = self.forward()
         user_score = out[user_tensor]
         item_score = out[item_tensor]
+        
         score = torch.sum(user_score * item_score, dim=1).view(-1, 2)
         loss = -torch.mean(torch.log(torch.sigmoid(torch.matmul(score, self.weight))))
         reg_embedding_loss = (self.id_embedding[user_tensor]**2 + self.id_embedding[item_tensor]**2).mean()
@@ -96,10 +99,25 @@ class MMGCN(GeneralRecommender):
     def full_sort_predict(self, interaction):
         user_tensor = self.result[:self.n_users]
         item_tensor = self.result[self.n_users:]
-
         temp_user_tensor = user_tensor[interaction[0], :]
         score_matrix = torch.matmul(temp_user_tensor, item_tensor.t())
         return score_matrix
+
+    @torch.no_grad()
+    def export_user_item_features(self, save_dir=None):
+        """Export user/item representations (with modalities) from the current model.
+
+        Returns:
+            tuple(Tensor, Tensor): user_tensor [n_users, d], item_tensor [n_items, d]
+        """
+        reps = self.forward()
+        user_tensor = reps[:self.n_users].detach()
+        item_tensor = reps[self.n_users:].detach()
+        if save_dir:
+            os.makedirs(save_dir, exist_ok=True)
+            np.save(os.path.join(save_dir, "mmgcn_user_feat.npy"), user_tensor.cpu().numpy())
+            np.save(os.path.join(save_dir, "mmgcn_item_feat.npy"), item_tensor.cpu().numpy())
+        return user_tensor, item_tensor
 
 
 class GCN(torch.nn.Module):
@@ -148,8 +166,7 @@ class GCN(torch.nn.Module):
         nn.init.xavier_normal_(self.conv_embed_2.weight)
         self.linear_layer2 = nn.Linear(self.dim_id, self.dim_id)
         nn.init.xavier_normal_(self.linear_layer2.weight)
-        self.g_layer2 = nn.Linear(self.dim_id + self.dim_id, self.dim_id) if self.concate else nn.Linear(self.dim_id,
-                                                                                                         self.dim_id)
+        self.g_layer2 = nn.Linear(self.dim_id + self.dim_id, self.dim_id) if self.concate else nn.Linear(self.dim_id, self.dim_id)
 
         self.conv_embed_3 = BaseModel(self.dim_id, self.dim_id, aggr=self.aggr_mode)
         nn.init.xavier_normal_(self.conv_embed_3.weight)

@@ -92,8 +92,8 @@ class TopKEvaluator(object):
         # get metrics
         metric_dict = {}
         result_list = self._calculate_metrics(pos_len_list, bool_rec_matrix)
-        for metric, value in zip(self.metrics, result_list):
-            for k in self.topk:
+        for k in self.topk:
+            for metric, value in zip(self.metrics, result_list):
                 key = '{}@{}'.format(metric, k)
                 metric_dict[key] = round(value[k - 1], 4)
         return metric_dict

@@ -32,6 +32,12 @@ def core_k_filtering(df: pd.DataFrame, k: int, item2idx: dict):
     return filtered_df, user2idx
 
 
+def keep_books_exist_in_reviews(books_df: pd.DataFrame, reviews_df: pd.DataFrame):
+    keep_ids = set(reviews_df["product_id"].unique())
+    books_df = books_df[books_df["product_id"].isin(keep_ids)].reset_index(drop=True)
+    return books_df
+
+
 def reindexing(df: pd.DataFrame, user2idx, item2idx):
     df["customer_index"] = df["customer_id"].map(user2idx)
     df['product_index'] = df['product_id'].map(item2idx)
@@ -49,11 +55,21 @@ if __name__ == '__main__':
         downloaded_image_ids.append(int(os.path.splitext(os.path.basename(file))[0])) 
     
     filtered_books_df, item2idx = multimodal_filtering(books_df, downloaded_image_ids)
-    # filtered_books_df.to_csv("./data/features/final_cleaned_books.csv", index=False)
     print(f"Multimodal Filtering - Books Shape: {filtered_books_df.shape}")
     
     filtered_reviews_df, user2idx = core_k_filtering(reviews_df, K, item2idx)
     print(f"Core-{K} Filtering - Reviews Shape: {filtered_reviews_df.shape}")
     
+    filtered_books_df = keep_books_exist_in_reviews(filtered_books_df, filtered_reviews_df)
+    print(f"Books exist in Reviews - Books Shape: {filtered_books_df.shape}")
+    
+    unique_items = sorted(filtered_books_df["product_id"].unique())
+    item2idx = {it: j for j, it in enumerate(unique_items)}
+    filtered_books_df["product_index"] = filtered_books_df["product_id"].map(item2idx)
+    
     interaction_df = reindexing(filtered_reviews_df, user2idx, item2idx)
-    # interaction_df.to_csv("./data/features/final_interactions.csv", index=False)
+    
+    print(f"Final Shapes - Books: {filtered_books_df.shape}, Interactions: {interaction_df.shape}")
+    
+    # filtered_books_df.to_csv("./data/features/final_cleaned_books.csv", index=False)
+    # interaction_df.to_csv("./data/features/final_interactions_lam.csv", index=False)

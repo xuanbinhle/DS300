@@ -54,7 +54,6 @@ def quick_start(model, dataset, config_dict, mg=False):
             config[j] = k
         init_seed(config['seed'])
         
-        
         print(config)
         print(f"========={idx+1}/{total_loops}: Parameters:{config['hyper_parameters']}={hyper_tuple}=======")
 
@@ -86,8 +85,7 @@ def quick_start(model, dataset, config_dict, mg=False):
 
     print("\n============All Over=====================")
     for (p, k, v) in hyper_ret:
-        print('Parameters: {}={},\n best valid: {},\n best test: {}'.format(config['hyper_parameters'],
-                                                                                  p, dict2str(k), dict2str(v)))
+        print('Parameters: {}={},\n best valid: {},\n best test: {}'.format(config['hyper_parameters'], p, dict2str(k), dict2str(v)))
 
     print('\n\n█████████████ BEST ████████████████')
     print('\tParameters: {}={},\nValid: {},\nTest: {}\n\n'.format(config['hyper_parameters'],

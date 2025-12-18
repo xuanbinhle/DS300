@@ -19,53 +19,70 @@ from utils.recommender import GeneralRecommender
 
 class FREEDOM(GeneralRecommender):
     def __init__(self, config, dataset):
-        super(FREEDOM, self).__init__(config, dataset)
+        super().__init__(config, dataset)
 
-        self.embedding_dim = config['embedding_size']
-        self.feat_embed_dim = config['feat_embed_dim']
-        self.knn_k = config['knn_k']
-        self.lambda_coeff = config['lambda_coeff']
-        self.cf_model = config['cf_model']
-        self.n_layers = config['n_mm_layers']
-        self.n_ui_layers = config['n_ui_layers']
-        self.reg_weight = config['reg_weight']
+        # -------- Config --------
+        self.embedding_dim    = config["embedding_size"]
+        self.feat_embed_dim   = config["feat_embed_dim"]
+        self.knn_k            = config["knn_k"]
+        self.lambda_coeff     = config["lambda_coeff"]
+        self.cf_model         = config["cf_model"]
+        self.n_layers         = config["n_mm_layers"]
+        self.n_ui_layers      = config["n_ui_layers"]
+        self.reg_weight       = config["reg_weight"]
+        self.mm_image_weight  = config["mm_image_weight"]
+        self.dropout          = config["dropout"]
+        self.degree_ratio     = config["degree_ratio"]
+
         self.build_item_graph = True
-        self.mm_image_weight = config['mm_image_weight']
-        self.dropout = config['dropout']
-        self.degree_ratio = config['degree_ratio']
+        self.n_nodes          = self.n_users + self.n_items
 
-        self.n_nodes = self.n_users + self.n_items
+        # -------- Graph / interactions --------
+        self.interaction_matrix = dataset.inter_matrix(form="coo").astype(np.float32)
 
-        # load dataset info
-        self.interaction_matrix = dataset.inter_matrix(form='coo').astype(np.float32)
         self.norm_adj = self.get_norm_adj_mat().to(self.device)
-        self.masked_adj, self.mm_adj = None, None
-        self.edge_indices, self.edge_values = self.get_edge_info()
-        self.edge_indices, self.edge_values = self.edge_indices.to(self.device), self.edge_values.to(self.device)
-        self.edge_full_indices = torch.arange(self.edge_values.size(0)).to(self.device)
+        self.masked_adj = None
+        self.mm_adj = None
 
+        edge_idx, edge_val = self.get_edge_info()
+        self.edge_indices = edge_idx.to(self.device)
+        self.edge_values  = edge_val.to(self.device)
+        self.edge_full_indices = torch.arange(self.edge_values.size(0), device=self.device)
+
+        # -------- ID embeddings --------
         self.user_embedding = nn.Embedding(self.n_users, self.embedding_dim)
         self.item_id_embedding = nn.Embedding(self.n_items, self.embedding_dim)
         nn.init.xavier_uniform_(self.user_embedding.weight)
         nn.init.xavier_uniform_(self.item_id_embedding.weight)
 
+        # -------- Multimodal embeddings (optional) --------
+        self.image_embedding, self.image_trs = None, None
+        self.text_embedding, self.text_trs   = None, None
+
         if self.v_feat is not None:
             self.image_embedding = nn.Embedding.from_pretrained(self.v_feat, freeze=False)
             self.image_trs = nn.Linear(self.v_feat.shape[1], self.feat_embed_dim)
+
         if self.t_feat is not None:
             self.text_embedding = nn.Embedding.from_pretrained(self.t_feat, freeze=False)
             self.text_trs = nn.Linear(self.t_feat.shape[1], self.feat_embed_dim)
 
-        if self.v_feat is not None:
-            indices, image_adj = self.get_knn_adj_mat(self.image_embedding.weight.detach())
-            self.mm_adj = image_adj
-        if self.t_feat is not None:
-            indices, text_adj = self.get_knn_adj_mat(self.text_embedding.weight.detach())
-            self.mm_adj = text_adj
-        if self.v_feat is not None and self.t_feat is not None:
-            self.mm_adj = self.mm_image_weight * image_adj + (1.0 - self.mm_image_weight) * text_adj
-            del text_adj
-            del image_adj
+        # -------- Build mm adjacency (optional) --------
+        image_adj = None
+        text_adj = None
+
+        if self.image_embedding is not None:
+            _, image_adj = self.get_knn_adj_mat(self.image_embedding.weight.detach())
+
+        if self.text_embedding is not None:
+            _, text_adj = self.get_knn_adj_mat(self.text_embedding.weight.detach())
+
+        if image_adj is not None and text_adj is not None:
+            w = float(self.mm_image_weight)
+            self.mm_adj = w * image_adj + (1.0 - w) * text_adj
+        else:
+            self.mm_adj = image_adj if image_adj is not None else text_adj
+
 
     def get_knn_adj_mat(self, mm_embeddings):
         context_norm = mm_embeddings.div(torch.norm(mm_embeddings, p=2, dim=-1, keepdim=True))

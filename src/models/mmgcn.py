@@ -103,22 +103,6 @@ class MMGCN(GeneralRecommender):
         score_matrix = torch.matmul(temp_user_tensor, item_tensor.t())
         return score_matrix
 
-    @torch.no_grad()
-    def export_user_item_features(self, save_dir=None):
-        """Export user/item representations (with modalities) from the current model.
-
-        Returns:
-            tuple(Tensor, Tensor): user_tensor [n_users, d], item_tensor [n_items, d]
-        """
-        reps = self.forward()
-        user_tensor = reps[:self.n_users].detach()
-        item_tensor = reps[self.n_users:].detach()
-        if save_dir:
-            os.makedirs(save_dir, exist_ok=True)
-            np.save(os.path.join(save_dir, "mmgcn_user_feat.npy"), user_tensor.cpu().numpy())
-            np.save(os.path.join(save_dir, "mmgcn_item_feat.npy"), item_tensor.cpu().numpy())
-        return user_tensor, item_tensor
-
 
 class GCN(torch.nn.Module):
     def __init__(self, edge_index, batch_size, num_user, num_item, dim_feat, dim_id, aggr_mode, concate, num_layer,

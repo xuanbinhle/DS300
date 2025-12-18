@@ -212,6 +212,8 @@ class Trainer(AbstractTrainer):
         train_loss_output = 'epoch %d training [time: %.2fs, ' % (epoch_idx, e_time - s_time)
         if isinstance(losses, tuple):
             train_loss_output = ', '.join('train_loss%d: %.4f' % (idx + 1, loss) for idx, loss in enumerate(losses))
+        elif isinstance(losses, type(None)):
+            train_loss_output += 'train loss: nan'
         else:
             train_loss_output += 'train loss: %.4f' % losses
         return train_loss_output + ']'

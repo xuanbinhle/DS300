@@ -9,3 +9,5 @@ data/book_images
 *.env
 *.jsonl
 chk_kafka_out/
+tmp/
+venv/

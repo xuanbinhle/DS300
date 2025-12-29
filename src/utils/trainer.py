@@ -5,6 +5,7 @@ r"""
 ################################
 """
 
+import os
 import itertools
 import torch
 import torch.optim as optim
@@ -265,6 +266,7 @@ class Trainer(AbstractTrainer):
                 valid_score_output = "epoch %d evaluating [time: %.2fs, valid_score: %f]" % \
                                      (epoch_idx, valid_end_time - valid_start_time, valid_score)
                 valid_result_output = 'valid result: \n' + dict2str(valid_result)
+                
                 # test
                 _, test_result = self._valid_epoch(test_data)
                 if verbose:
@@ -275,6 +277,16 @@ class Trainer(AbstractTrainer):
                     update_output = '██ ' + self.config['model'] + '--Best validation results updated!!!'
                     if verbose:
                         print(update_output)
+                        if saved:
+                            os.makedirs(self.config['checkpoint_dir'], exist_ok=True)
+                            save_path = os.path.join(self.config['checkpoint_dir'], f"{self.config['model']}_best.pth")
+                            torch.save({
+                                'epoch': epoch_idx,
+                                'model_state_dict': self.model.state_dict(),
+                                'best_valid_score': self.best_valid_score,
+                            }, save_path)
+                            
+                            
                     self.best_valid_result = valid_result
                     self.best_test_upon_valid = test_result
 
@@ -284,7 +296,7 @@ class Trainer(AbstractTrainer):
                     if verbose:
                         print(stop_output)
                     break
-        return self.best_valid_score, self.best_valid_result, self.best_test_upon_valid
+        return self.best_valid_score, self.best_valid_result, self.best_test_upon_valid, self.model.state_dict()
 
 
     @torch.no_grad()
@@ -308,6 +320,27 @@ class Trainer(AbstractTrainer):
             batch_matrix_list.append(topk_index)
         return self.evaluator.evaluate(batch_matrix_list, eval_data, is_test=is_test, idx=idx)
 
+    @torch.no_grad()
+    def inference(self, eval_data):
+        r"""Inference the model based on the eval data.
+        Returns:
+            Tensor: the inference result tensor
+        """
+        self.model.eval()
+        user2items = {}
+        # batch full users
+        for batch_idx, batched_data in enumerate(eval_data):
+            scores = self.model.full_sort_predict(batched_data)
+            masked_items = batched_data[1]
+            scores[masked_items[0], masked_items[1]] = -1e10
+
+            _, topk_index = torch.topk(scores, max(self.config['topk']), dim=-1)  # nusers x topk
+            batch_users = batched_data[0]
+            for u, items in zip(batch_users.cpu().tolist(), topk_index.cpu().tolist()):
+                user2items[u] = items
+        return user2items
+    
+    
     def plot_train_loss(self, show=True, save_path=None):
         r"""Plot the train loss in each epoch
 

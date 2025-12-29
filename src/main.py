@@ -1,7 +1,7 @@
 import sys
 import argparse
 import pandas as pd
-from utils.quick_start import quick_start
+from utils.quick_start import quick_start, inference_quick_start
 
 def get_parser():
     description = 'Training model recommendation system'
@@ -11,6 +11,7 @@ def get_parser():
     parser.add_argument('--config_dir', type=str, required=True, help='Folder of configs')
     parser.add_argument('--vision_feature_file', type=str, default=None, help='Path to Feature Images')
     parser.add_argument('--text_feature_file', type=str, default=None, help='Path to Features Description Books')
+    parser.add_argument('--do_train', action='store_true', help='Whether to perform training')
     return parser
 
 def main(args):
@@ -20,7 +21,11 @@ def main(args):
         'text_feature_file': args.text_feature_file
     }
     dataset = pd.read_csv(args.path_dataset)
-    quick_start(model=args.model, dataset=dataset, config_dict=config_dict)
+    
+    if args.do_train:
+        quick_start(model=args.model, dataset=dataset, config_dict=config_dict)
+    else:
+        inference_quick_start(model=args.model, dataset=dataset, config_dict=config_dict)
 
 if __name__ == '__main__':
     args = get_parser().parse_args(sys.argv[1:])

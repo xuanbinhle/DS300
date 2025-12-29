@@ -60,6 +60,7 @@ class RecDataset(Dataset):
             train_users = set(train_df[self.uid_field].values)
             val_df = val_df[val_df[self.uid_field].isin(train_users)].reset_index(drop=True)
             test_df = test_df[test_df[self.uid_field].isin(train_users)].reset_index(drop=True)
+        
         return self.copy(train_df), self.copy(val_df), self.copy(test_df)
 
     def shuffle(self) -> None:

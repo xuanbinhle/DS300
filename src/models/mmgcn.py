@@ -28,7 +28,7 @@ class MMGCN(GeneralRecommender):
         num_layer = config['n_layers']
         batch_size = config['train_batch_size']         # not used
         self.aggr_mode = 'mean'
-        self.concate = 'False'
+        self.concate = True
         has_id = True
         self.weight = torch.tensor([[1.0], [-1.0]]).to(self.device)
         self.reg_weight = config['reg_weight']
@@ -42,7 +42,7 @@ class MMGCN(GeneralRecommender):
 
         if self.v_feat is not None:
             self.v_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.v_feat.size(1), dim_x, self.aggr_mode,
-                             self.concate, num_layer=num_layer, has_id=has_id, dim_latent=256, device=self.device)
+                             self.concate, num_layer=num_layer, has_id=has_id, device=self.device)
             self.num_modal += 1
 
         if self.t_feat is not None:
@@ -71,7 +71,11 @@ class MMGCN(GeneralRecommender):
         if not reps:
             raise RuntimeError("MMGCN.forward(): no modality features found (v_feat and t_feat are both None).")
 
-        representation = sum(reps) / len(reps)
+        if len(reps) == 2:
+            g = torch.sigmoid(self.gate(torch.cat([reps[0], reps[1]], dim=-1)))  # [N,1]
+            representation = g * reps[0] + (1.0 - g) * reps[1]
+        else:
+            representation = sum(reps) / len(reps)
         self.result = representation
         return representation
 
@@ -123,7 +127,7 @@ class GCN(torch.nn.Module):
 
         if self.dim_latent:
             self.preference = nn.init.xavier_normal_(torch.rand((num_user, self.dim_latent), requires_grad=True)).to(self.device)
-            #self.preference = nn.Parameter(nn.init.xavier_normal_(torch.rand((num_user, self.dim_latent))))
+            # self.preference = nn.Parameter(nn.init.xavier_normal_(torch.rand((num_user, self.dim_latent))))
 
             self.MLP = nn.Linear(self.dim_feat, self.dim_latent)
             self.conv_embed_1 = BaseModel(self.dim_latent, self.dim_latent, aggr=self.aggr_mode)

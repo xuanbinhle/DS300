@@ -119,10 +119,10 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
                 print(f"### Best model saved to {save_path} ###")
         idx += 1
 
-        print('best valid result: {}'.format(dict2str(best_valid_result)))
-        print('test result: {}'.format(dict2str(best_test_upon_valid)))
-        print(f"### Current BEST:\nParameters: {config['hyper_parameters']}={hyper_ret[best_test_idx][0]}, \
-              \nValid: {dict2str(hyper_ret[best_test_idx][1])},\nTest: {dict2str(hyper_ret[best_test_idx][2])}\n\n\n")
+        # print('best valid result: {}'.format(dict2str(best_valid_result)))
+        # print('test result: {}'.format(dict2str(best_test_upon_valid)))
+        # print(f"### Current BEST:\nParameters: {config['hyper_parameters']}={hyper_ret[best_test_idx][0]}, \
+        #       \nValid: {dict2str(hyper_ret[best_test_idx][1])},\nTest: {dict2str(hyper_ret[best_test_idx][2])}\n\n\n")
 
 
     print("\n============All Over=====================")

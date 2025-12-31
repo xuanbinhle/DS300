@@ -30,19 +30,14 @@ class VBPR(GeneralRecommender):
         
         # Store normalized features (no computation graph)
         if self.v_feat is not None and self.t_feat is not None:
-            self.t_feat_norm = F.normalize(self.t_feat, p=2, dim=-1).detach()
-            self.v_feat_norm = F.normalize(self.v_feat, p=2, dim=-1).detach()
-            
-            self.text_linear = nn.Linear(self.t_feat_norm.shape[1], self.i_embedding_size)
-            self.vison_linear = nn.Linear(self.v_feat_norm.shape[1], self.i_embedding_size)
+            self.text_linear = nn.Linear(self.t_feat.shape[1], self.i_embedding_size)
+            self.vison_linear = nn.Linear(self.v_feat.shape[1], self.i_embedding_size)
             self.fusion_layer = nn.Linear(self.i_embedding_size * 2, self.i_embedding_size)
         elif self.v_feat is not None:
-            self.v_feat_norm = F.normalize(self.v_feat, p=2, dim=-1).detach()
             self.text_linear = None
-            self.vison_linear = nn.Linear(self.v_feat_norm.shape[1], self.i_embedding_size)
+            self.vison_linear = nn.Linear(self.v_feat.shape[1], self.i_embedding_size)
         else:
-            self.t_feat_norm = F.normalize(self.t_feat, p=2, dim=-1).detach()
-            self.text_linear = nn.Linear(self.t_feat_norm.shape[1], self.i_embedding_size)
+            self.text_linear = nn.Linear(self.t_feat.shape[1], self.i_embedding_size)
             self.vison_linear = None
 
         self.loss = BPRLoss()
@@ -60,14 +55,13 @@ class VBPR(GeneralRecommender):
                 nn.init.zeros_(module.bias)
 
     def forward(self, dropout=0.0):
-        # Compute item features in forward pass to avoid graph reuse issues
         if self.text_linear is not None and self.vison_linear is not None:
-            combined_features = torch.cat((self.text_linear(self.t_feat_norm), self.vison_linear(self.v_feat_norm)), dim=-1)
+            combined_features = torch.cat((self.text_linear(self.t_feat), self.vison_linear(self.v_feat)), dim=-1)
             item_raw_features = self.fusion_layer(combined_features)
         elif self.vison_linear is not None:
-            item_raw_features = self.vison_linear(self.v_feat_norm)
+            item_raw_features = self.vison_linear(self.v_feat)
         else:
-            item_raw_features = self.text_linear(self.t_feat_norm)
+            item_raw_features = self.text_linear(self.t_feat)
             
         item_embeddings = torch.cat((self.i_embedding, item_raw_features), -1)
         user_e = F.dropout(self.u_embedding, dropout)

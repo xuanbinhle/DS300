@@ -40,7 +40,6 @@ class LATTICE(GeneralRecommender):
         self.interaction_matrix = dataset.inter_matrix(form='coo').astype(np.float32)
         self.norm_adj = self.get_adj_mat()
         self.norm_adj = self.sparse_mx_to_torch_sparse_tensor(self.norm_adj).float().to(self.device)
-        self.item_adj = None
 
         self.n_ui_layers = len(self.weight_size)
         self.weight_size = [self.embedding_dim] + self.weight_size
@@ -60,35 +59,24 @@ class LATTICE(GeneralRecommender):
                 self.dropout_list.append(nn.Dropout(dropout_list[i]))
         
         if self.v_feat is not None:
-            # Normalize vision features before creating embedding
-            v_feat_norm = F.normalize(self.v_feat, p=2, dim=-1)
-            self.image_embedding = nn.Embedding.from_pretrained(v_feat_norm, freeze=False)
+            self.image_embedding = nn.Embedding.from_pretrained(self.v_feat, freeze=False)
             image_adj = build_sim(self.image_embedding.weight.detach())
             image_adj = build_knn_neighbourhood(image_adj, topk=self.knn_k)
             image_adj = compute_normalized_laplacian(image_adj)
-            
             self.image_original_adj = image_adj.to(self.device)
             self.image_trs = nn.Linear(self.v_feat.shape[1], self.feat_embed_dim)
 
         if self.t_feat is not None:
-            # Normalize text features before creating embedding
-            t_feat_norm = F.normalize(self.t_feat, p=2, dim=-1)
-            self.text_embedding = nn.Embedding.from_pretrained(t_feat_norm, freeze=False)
+            self.text_embedding = nn.Embedding.from_pretrained(self.t_feat, freeze=False)
             text_adj = build_sim(self.text_embedding.weight.detach())
             text_adj = build_knn_neighbourhood(text_adj, topk=self.knn_k)
             text_adj = compute_normalized_laplacian(text_adj)
-            
             self.text_original_adj = text_adj.to(self.device)
             self.text_trs = nn.Linear(self.t_feat.shape[1], self.feat_embed_dim)
 
-        # Single gate with sigmoid for image/text fusion
-        if (self.v_feat is not None) and (self.t_feat is not None):
-            self.fusion_gate = nn.Sequential(
-                nn.Linear(self.feat_embed_dim * 2, self.feat_embed_dim),
-                nn.ReLU(),
-                nn.Linear(self.feat_embed_dim, 1),
-                nn.Sigmoid()
-            )
+        self.modal_weight = nn.Parameter(torch.Tensor([0.5, 0.5]))
+        self.softmax = nn.Softmax(dim=0)
+        
 
     def pre_epoch_processing(self):
         self.build_item_graph = True
@@ -130,6 +118,8 @@ class LATTICE(GeneralRecommender):
             text_feats = self.text_trs(self.text_embedding.weight)
             
         if build_item_graph:
+            weight = self.softmax(self.modal_weight)
+
             if self.v_feat is not None:
                 self.image_adj = build_sim(image_feats)
                 self.image_adj = build_knn_neighbourhood(self.image_adj, topk=self.knn_k)
@@ -141,17 +131,10 @@ class LATTICE(GeneralRecommender):
                 learned_adj = self.text_adj
                 original_adj = self.text_original_adj
             if self.v_feat is not None and self.t_feat is not None:
-                # Single gate: sigmoid outputs image weight, text gets (1 - image_weight)
-                combined_feats = torch.cat([image_feats.mean(dim=0), text_feats.mean(dim=0)])  # [feat_embed_dim*2]
-                weight_v = self.fusion_gate(combined_feats).squeeze()  # scalar in [0,1]
-                weight_t = 1.0 - weight_v
-                
-                learned_adj = weight_v * self.image_adj + weight_t * self.text_adj
-                original_adj = weight_v * self.image_original_adj + weight_t * self.text_original_adj
+                learned_adj = weight[0] * self.image_adj + weight[1] * self.text_adj
+                original_adj = weight[0] * self.image_original_adj + weight[1] * self.text_original_adj
 
             learned_adj = compute_normalized_laplacian(learned_adj)
-            if self.item_adj is not None:
-                del self.item_adj
             self.item_adj = (1 - self.lambda_coeff) * learned_adj + self.lambda_coeff * original_adj
         else:
             self.item_adj = self.item_adj.detach()

@@ -128,7 +128,7 @@ class GeneralRecommender(AbstractRecommender):
                 self.t_dim = t_tensor.size(-1)
 
         # Nếu config multimodal == True mà không load => báo lỗi
-        if self.config['is_multimodal_model'] and self.v_feat is None and self.t_feat is None:
+        if self.config['is_multimodal_model'] and self.v_feat is None and self.t_feat is None and self.config['model'] != 'BPR':
             raise ValueError(
                 f"[GeneralRecommender] Multimodal model nhưng cả vision_feature_file "
                 f"và text_feature_file đều không load được. Kiểm tra đường dẫn hoặc config."

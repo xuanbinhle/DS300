@@ -50,7 +50,7 @@ def inference_quick_start(model, dataset, config_dict, mg=False):
     print('Test result: {}'.format(dict2str(test_result)))
 
 
-def quick_start(model, dataset, config_dict, mg=False, saved=True):
+def quick_start(model, dataset, config_dict, mg=False, saved=False):
     config = Config(model, config_dict, mg)
     
     # load data
@@ -59,11 +59,6 @@ def quick_start(model, dataset, config_dict, mg=False, saved=True):
     print('\n====Training====\n' + str(train_dataset))
     print('\n====Validation====\n' + str(val_dataset))
     print('\n====Testing====\n' + str(test_dataset))
-    
-    # wrap into dataloader
-    train_data = TrainDataLoader(config, train_dataset, batch_size=config['train_batch_size'], shuffle=True)
-    valid_data = EvalDataLoader(config, val_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
-    test_data = EvalDataLoader(config, test_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
 
     ############ Dataset loadded, run model
     hyper_ret = []
@@ -89,8 +84,10 @@ def quick_start(model, dataset, config_dict, mg=False, saved=True):
             config[j] = k
         init_seed(config['seed'])
         
-        print(config)
-        print(f"========={idx+1}/{total_loops}: Parameters:{config['hyper_parameters']}={hyper_tuple}=======")
+        # wrap into dataloader
+        train_data = TrainDataLoader(config, train_dataset, batch_size=config['train_batch_size'], shuffle=True)
+        valid_data = EvalDataLoader(config, val_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
+        test_data = EvalDataLoader(config, test_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
 
         # set random state of dataloader
         train_data.pretrain_setup()

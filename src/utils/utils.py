@@ -6,6 +6,7 @@ Utility functions
 ##########################
 """
 
+import os
 import sys
 import numpy as np
 import torch
@@ -37,11 +38,11 @@ def get_model(model_name: str):
 
 
 def init_seed(seed):
+    os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
     torch.manual_seed(seed)
 
 

@@ -53,6 +53,7 @@ def inference_quick_start(model, dataset, config_dict, mg=False):
 
 def quick_start(model, dataset, config_dict, mg=False, saved=False):
     config = Config(model, config_dict, mg)
+    init_seed(config['seed'])
     
     # load data
     dataset = RecDataset(config, dataset)
@@ -60,6 +61,12 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
     print('\n====Training====\n' + str(train_dataset))
     print('\n====Validation====\n' + str(val_dataset))
     print('\n====Testing====\n' + str(test_dataset))
+    
+    # wrap into dataloader
+    train_data = TrainDataLoader(config, train_dataset, batch_size=config['train_batch_size'], shuffle=False)
+    train_data.pretrain_setup(config['seed']) # set random state of dataloader
+    valid_data = EvalDataLoader(config, val_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
+    test_data = EvalDataLoader(config, test_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
 
     ############ Dataset loadded, run model
     hyper_ret = []
@@ -71,8 +78,6 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
 
     # hyper-parameters
     hyper_ls = []
-    if "seed" not in config['hyper_parameters']:
-        config['hyper_parameters'] = ['seed'] + config['hyper_parameters']
     for i in config['hyper_parameters']:
         hyper_ls.append(config[i] or [None])
         
@@ -83,15 +88,7 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
         # random seed reset
         for j, k in zip(config['hyper_parameters'], hyper_tuple):
             config[j] = k
-        init_seed(config['seed'])
-        
-        # wrap into dataloader
-        train_data = TrainDataLoader(config, train_dataset, batch_size=config['train_batch_size'], shuffle=True)
-        valid_data = EvalDataLoader(config, val_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
-        test_data = EvalDataLoader(config, test_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
 
-        # set random state of dataloader
-        train_data.pretrain_setup()
         # model loading and initialization
         model = get_model(config['model'])(config, train_data).to(config['device'])
 
@@ -118,11 +115,6 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
                 }, save_path)
                 print(f"### Best model saved to {save_path} ###")
         idx += 1
-
-        # print('best valid result: {}'.format(dict2str(best_valid_result)))
-        # print('test result: {}'.format(dict2str(best_test_upon_valid)))
-        # print(f"### Current BEST:\nParameters: {config['hyper_parameters']}={hyper_ret[best_test_idx][0]}, \
-        #       \nValid: {dict2str(hyper_ret[best_test_idx][1])},\nTest: {dict2str(hyper_ret[best_test_idx][2])}\n\n\n")
 
 
     print("\n============All Over=====================")

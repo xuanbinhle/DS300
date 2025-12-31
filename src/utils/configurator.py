@@ -90,9 +90,9 @@ class Config(object):
         smaller_metric = ['rmse', 'mae', 'logloss']
         valid_metric = self.final_config_dict['valid_metric'].split('@')[0]
         self.final_config_dict['valid_metric_bigger'] = False if valid_metric in smaller_metric else True
-        # if seed not in hyper_parameters, then add
-        if "seed" not in self.final_config_dict['hyper_parameters']:
-            self.final_config_dict['hyper_parameters'] += ['seed']
+        # # if seed not in hyper_parameters, then add
+        # if "seed" not in self.final_config_dict['hyper_parameters']:
+        #     self.final_config_dict['hyper_parameters'] += ['seed']
 
     def _init_device(self):
         use_gpu = self.final_config_dict['use_gpu']

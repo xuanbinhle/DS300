@@ -1,6 +1,6 @@
 # general
 use_gpu: True
-seed: [42]
+seed: 42
 
 # multi-modal raw features
 dataset_dir: './data/features'
@@ -36,6 +36,3 @@ eval_batch_size: 4096
 
 # use pretrained extract text/image feature
 end2end: False
-
-# iteration parameters
-hyper_parameters: ["seed"]

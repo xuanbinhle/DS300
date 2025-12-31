@@ -219,7 +219,7 @@ class Trainer(AbstractTrainer):
             train_loss_output += 'train loss: %.4f' % losses
         return train_loss_output + ']'
 
-    def fit(self, train_data, valid_data=None, test_data=None, saved=False, verbose=True):
+    def fit(self, train_data, valid_data=None, test_data=None, saved=False, verbose=False):
         r"""Train the model based on the train data and the valid data.
 
         Args:
@@ -227,8 +227,8 @@ class Trainer(AbstractTrainer):
             valid_data (DataLoader, optional): the valid data, default: None.
                                                If it's None, the early_stopping is invalid.
             test_data (DataLoader, optional): None
-            verbose (bool, optional): whether to write training and evaluation information to logger, default: True
-            saved (bool, optional): whether to save the model parameters, default: True
+            verbose (bool, optional): whether to write training and evaluation information to logger, default: False
+            saved (bool, optional): whether to save the model parameters, default: False
 
         Returns:
              (float, dict): best valid score and best valid result. If valid_data is None, it returns (-1, None)
@@ -277,14 +277,14 @@ class Trainer(AbstractTrainer):
                     update_output = '██ ' + self.config['model'] + '--Best validation results updated!!!'
                     if verbose:
                         print(update_output)
-                        if saved:
-                            os.makedirs(self.config['checkpoint_dir'], exist_ok=True)
-                            save_path = os.path.join(self.config['checkpoint_dir'], f"{self.config['model']}_best.pth")
-                            torch.save({
-                                'epoch': epoch_idx,
-                                'model_state_dict': self.model.state_dict(),
-                                'best_valid_score': self.best_valid_score,
-                            }, save_path)
+                    if saved:
+                        os.makedirs(self.config['checkpoint_dir'], exist_ok=True)
+                        save_path = os.path.join(self.config['checkpoint_dir'], f"{self.config['model']}_best.pth")
+                        torch.save({
+                            'epoch': epoch_idx,
+                            'model_state_dict': self.model.state_dict(),
+                            'best_valid_score': self.best_valid_score,
+                        }, save_path)
                             
                             
                     self.best_valid_result = valid_result

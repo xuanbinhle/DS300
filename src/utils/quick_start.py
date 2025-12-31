@@ -79,7 +79,7 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
     # combinations
     combinators = list(product(*hyper_ls))
     total_loops = len(combinators)
-    for hyper_tuple in tqdm(combinators, total=total_loops, desc="Hyper-parameter tuning with Training loops"):
+    for hyper_tuple in tqdm(combinators, desc="Hyper-parameter tuning with Training loops"):
         # random seed reset
         for j, k in zip(config['hyper_parameters'], hyper_tuple):
             config[j] = k
@@ -94,7 +94,6 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
         train_data.pretrain_setup()
         # model loading and initialization
         model = get_model(config['model'])(config, train_data).to(config['device'])
-        print(model)
 
         # trainer loading and initialization
         trainer = Trainer(config, model, mg)

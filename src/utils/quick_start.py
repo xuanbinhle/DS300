@@ -14,6 +14,7 @@ from utils.trainer import Trainer
 import platform
 import os
 import torch
+from tqdm import tqdm
 
 
 def inference_quick_start(model, dataset, config_dict, mg=False):
@@ -78,7 +79,7 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
     # combinations
     combinators = list(product(*hyper_ls))
     total_loops = len(combinators)
-    for hyper_tuple in combinators:
+    for hyper_tuple in tqdm(combinators, total=total_loops, desc="Hyper-parameter tuning with Training loops"):
         # random seed reset
         for j, k in zip(config['hyper_parameters'], hyper_tuple):
             config[j] = k

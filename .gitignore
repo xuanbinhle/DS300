@@ -6,6 +6,5 @@
 *.pkl
 __pycache__/
 data/book_images
-features/
 .env
 saved/

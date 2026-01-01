@@ -53,7 +53,6 @@ def inference_quick_start(model, dataset, config_dict, mg=False):
 
 def quick_start(model, dataset, config_dict, mg=False, saved=False):
     config = Config(model, config_dict, mg)
-    init_seed(config['seed'])
     
     # load data
     dataset = RecDataset(config, dataset)
@@ -64,7 +63,6 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
     
     # wrap into dataloader
     train_data = TrainDataLoader(config, train_dataset, batch_size=config['train_batch_size'], shuffle=False)
-    train_data.pretrain_setup(config['seed']) # set random state of dataloader
     valid_data = EvalDataLoader(config, val_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
     test_data = EvalDataLoader(config, test_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
 
@@ -88,10 +86,13 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
         # random seed reset
         for j, k in zip(config['hyper_parameters'], hyper_tuple):
             config[j] = k
+        init_seed(config['seed'])
 
         # model loading and initialization
         model = get_model(config['model'])(config, train_data).to(config['device'])
 
+        # set random state of dataloader
+        train_data.pretrain_setup()
         # trainer loading and initialization
         trainer = Trainer(config, model, mg)
         # debug

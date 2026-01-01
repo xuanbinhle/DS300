@@ -126,13 +126,11 @@ class TrainDataLoader(AbstractDataLoader):
             self.user_user_dict = self._get_my_neighbors(self.config['USER_ID_FIELD'])
             self.item_item_dict = self._get_my_neighbors(self.config['ITEM_ID_FIELD'])
 
-    def pretrain_setup(self, seed=None):
+    def pretrain_setup(self):
         """
         Reset dataloader. Outputing the same positive & negative samples with each training.
         :return:
         """
-        random.seed(seed)
-        np.random.seed(seed)
         # sort & random
         if self.shuffle:
             self.dataset = self.dataset_bk.copy(self.dataset_bk.df)

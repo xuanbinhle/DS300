@@ -92,7 +92,7 @@ def quick_start(model, dataset, config_dict, mg=False, saved=False):
         model = get_model(config['model'])(config, train_data).to(config['device'])
 
         # set random state of dataloader
-        train_data.pretrain_setup()
+        train_data.pretrain_setup(config['seed'])
         # trainer loading and initialization
         trainer = Trainer(config, model, mg)
         # debug

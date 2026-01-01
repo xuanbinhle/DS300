@@ -36,3 +36,5 @@ eval_batch_size: 4096
 
 # use pretrained extract text/image feature
 end2end: False
+
+hyper_parameters: ["seed"]

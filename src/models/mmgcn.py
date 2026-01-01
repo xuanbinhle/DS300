@@ -71,11 +71,7 @@ class MMGCN(GeneralRecommender):
         if not reps:
             raise RuntimeError("MMGCN.forward(): no modality features found (v_feat and t_feat are both None).")
 
-        if len(reps) == 2:
-            g = torch.sigmoid(self.gate(torch.cat([reps[0], reps[1]], dim=-1)))  # [N,1]
-            representation = g * reps[0] + (1.0 - g) * reps[1]
-        else:
-            representation = sum(reps) / len(reps)
+        representation = sum(reps) / len(reps)
         self.result = representation
         return representation
 

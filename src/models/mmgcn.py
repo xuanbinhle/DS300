@@ -1,5 +1,6 @@
 # coding: utf-8
 """
+github: https://github.com/weiyinwei/MMGCN.git
 MMGCN: Multi-modal Graph Convolution Network for Personalized Recommendation of Micro-video. 
 In ACM MM`19,
 """
@@ -14,6 +15,24 @@ from torch_geometric.nn.conv import MessagePassing
 import torch_geometric
 
 from utils.recommender import GeneralRecommender
+
+
+class GatedFusion(nn.Module):
+    def __init__(self, d_img: int, d_txt: int, d: int):
+        super().__init__()
+        self.proj_img = nn.Linear(d_img, d)
+        self.proj_txt = nn.Linear(d_txt, d)
+        self.gate = nn.Sequential(
+            nn.Linear(2 * d, d),
+            nn.Sigmoid()
+        )
+
+    def forward(self, v_img, v_txt):
+        v = self.proj_img(v_img)
+        t = self.proj_txt(v_txt)
+        g = self.gate(torch.cat([v, t], dim=-1))
+        h = g * v + (1 - g) * t
+        return h, g
 
 
 class MMGCN(GeneralRecommender):
@@ -41,17 +60,16 @@ class MMGCN(GeneralRecommender):
         self.num_modal = 0
 
         if self.v_feat is not None:
-            self.v_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.v_feat.size(1), dim_x, self.aggr_mode,
-                             self.concate, num_layer=num_layer, has_id=has_id, device=self.device)
+            self.v_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.v_feat.size(1), dim_x, self.aggr_mode, self.concate, num_layer=num_layer, has_id=has_id, device=self.device)
             self.num_modal += 1
 
         if self.t_feat is not None:
-            self.t_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.t_feat.size(1), dim_x,
-                             self.aggr_mode, self.concate, num_layer=num_layer, has_id=has_id, device=self.device)
+            self.t_gcn = GCN(self.edge_index, batch_size, num_user, num_item, self.t_feat.size(1), dim_x, self.aggr_mode, self.concate, num_layer=num_layer, has_id=has_id, device=self.device)
             self.num_modal += 1
 
         self.id_embedding = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x), requires_grad=True)).to(self.device)
         self.result = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x))).to(self.device)
+        self.fusion = GatedFusion(d_img=dim_x, d_txt=dim_x, d=dim_x)
 
     def pack_edge_index(self, inter_mat):
         rows = inter_mat.row
@@ -71,7 +89,10 @@ class MMGCN(GeneralRecommender):
         if not reps:
             raise RuntimeError("MMGCN.forward(): no modality features found (v_feat and t_feat are both None).")
 
-        representation = sum(reps) / len(reps)
+        if len(reps) == 2:
+            representation, _ = self.fusion(reps[0], reps[1])
+        else:
+            representation = sum(reps) / len(reps)
         self.result = representation
         return representation
 
@@ -105,8 +126,7 @@ class MMGCN(GeneralRecommender):
 
 
 class GCN(torch.nn.Module):
-    def __init__(self, edge_index, batch_size, num_user, num_item, dim_feat, dim_id, aggr_mode, concate, num_layer,
-                 has_id, dim_latent=None, device='cpu'):
+    def __init__(self, edge_index, batch_size, num_user, num_item, dim_feat, dim_id, aggr_mode, concate, num_layer, has_id, dim_latent=None, device='cpu'):
         super(GCN, self).__init__()
         self.batch_size = batch_size
         self.num_user = num_user
@@ -123,8 +143,6 @@ class GCN(torch.nn.Module):
 
         if self.dim_latent:
             self.preference = nn.init.xavier_normal_(torch.rand((num_user, self.dim_latent), requires_grad=True)).to(self.device)
-            # self.preference = nn.Parameter(nn.init.xavier_normal_(torch.rand((num_user, self.dim_latent))))
-
             self.MLP = nn.Linear(self.dim_feat, self.dim_latent)
             self.conv_embed_1 = BaseModel(self.dim_latent, self.dim_latent, aggr=self.aggr_mode)
             nn.init.xavier_normal_(self.conv_embed_1.weight)
@@ -136,8 +154,6 @@ class GCN(torch.nn.Module):
 
         else:
             self.preference = nn.init.xavier_normal_(torch.rand((num_user, self.dim_feat), requires_grad=True)).to(self.device)
-            #self.preference = nn.Parameter(nn.init.xavier_normal_(torch.rand((num_user, self.dim_feat))))
-
             self.conv_embed_1 = BaseModel(self.dim_feat, self.dim_feat, aggr=self.aggr_mode)
             nn.init.xavier_normal_(self.conv_embed_1.weight)
             self.linear_layer1 = nn.Linear(self.dim_feat, self.dim_id)
@@ -156,8 +172,7 @@ class GCN(torch.nn.Module):
         nn.init.xavier_normal_(self.conv_embed_3.weight)
         self.linear_layer3 = nn.Linear(self.dim_id, self.dim_id)
         nn.init.xavier_normal_(self.linear_layer3.weight)
-        self.g_layer3 = nn.Linear(self.dim_id + self.dim_id, self.dim_id) if self.concate else nn.Linear(self.dim_id,
-                                                                                                         self.dim_id)
+        self.g_layer3 = nn.Linear(self.dim_id + self.dim_id, self.dim_id) if self.concate else nn.Linear(self.dim_id, self.dim_id)
 
     def forward(self, features, id_embedding):
         temp_features = self.MLP(features) if self.dim_latent else features
@@ -166,22 +181,16 @@ class GCN(torch.nn.Module):
         x = F.normalize(x)
 
         h = F.leaky_relu(self.conv_embed_1(x, self.edge_index))  # equation 1
-        x_hat = F.leaky_relu(self.linear_layer1(x)) + id_embedding if self.has_id else F.leaky_relu(
-            self.linear_layer1(x))  # equation 5
-        x = F.leaky_relu(self.g_layer1(torch.cat((h, x_hat), dim=1))) if self.concate else F.leaky_relu(
-            self.g_layer1(h) + x_hat)
+        x_hat = F.leaky_relu(self.linear_layer1(x)) + id_embedding if self.has_id else F.leaky_relu(self.linear_layer1(x))  # equation 5
+        x = F.leaky_relu(self.g_layer1(torch.cat((h, x_hat), dim=1))) if self.concate else F.leaky_relu(self.g_layer1(h) + x_hat)
 
         h = F.leaky_relu(self.conv_embed_2(x, self.edge_index))  # equation 1
-        x_hat = F.leaky_relu(self.linear_layer2(x)) + id_embedding if self.has_id else F.leaky_relu(
-            self.linear_layer2(x))  # equation 5
-        x = F.leaky_relu(self.g_layer2(torch.cat((h, x_hat), dim=1))) if self.concate else F.leaky_relu(
-            self.g_layer2(h) + x_hat)
+        x_hat = F.leaky_relu(self.linear_layer2(x)) + id_embedding if self.has_id else F.leaky_relu(self.linear_layer2(x))  # equation 5
+        x = F.leaky_relu(self.g_layer2(torch.cat((h, x_hat), dim=1))) if self.concate else F.leaky_relu(self.g_layer2(h) + x_hat)
 
         h = F.leaky_relu(self.conv_embed_3(x, self.edge_index))  # equation 1
-        x_hat = F.leaky_relu(self.linear_layer3(x)) + id_embedding if self.has_id else F.leaky_relu(
-            self.linear_layer3(x))  # equation 5
-        x = F.leaky_relu(self.g_layer3(torch.cat((h, x_hat), dim=1))) if self.concate else F.leaky_relu(
-            self.g_layer3(h) + x_hat)
+        x_hat = F.leaky_relu(self.linear_layer3(x)) + id_embedding if self.has_id else F.leaky_relu(self.linear_layer3(x))  # equation 5
+        x = F.leaky_relu(self.g_layer3(torch.cat((h, x_hat), dim=1))) if self.concate else F.leaky_relu(self.g_layer3(h) + x_hat)
 
         return x
 

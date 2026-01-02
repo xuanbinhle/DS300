@@ -31,7 +31,7 @@ class GatedFusion(nn.Module):
         v = self.proj_img(v_img)
         t = self.proj_txt(v_txt)
         g = self.gate(torch.cat([v, t], dim=-1))
-        h = g * v + (1 - g) * t
+        h = g * t + (1 - g) * v
         return h, g
 
 

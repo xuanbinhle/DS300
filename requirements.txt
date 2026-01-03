@@ -7,5 +7,9 @@ icecream
 scikit-learn
 transformers
 SentencePiece
+PyYAML
+langchain==0.3.27
+langchain-openai==0.3.35
+torch_geometric
 SQLAlchemy
 psycopg2-binary

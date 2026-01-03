@@ -1,0 +1,7 @@
+# Common Features
+USER_ID_FIELD: customer_index
+ITEM_ID_FIELD: product_index
+RATING_FIELD: rating
+
+filter_out_cod_start_users: True
+interation_filename: 'final_interactions.csv'

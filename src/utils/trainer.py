@@ -201,7 +201,7 @@ class Trainer(AbstractTrainer):
             dict: valid result
         """
         valid_result = self.evaluate(valid_data)
-        valid_score = valid_result[self.valid_metric] if self.valid_metric else valid_result['NDCG@20']
+        valid_score = valid_result[self.valid_metric] if self.valid_metric else valid_result['NDCG@10']
         return valid_score, valid_result
 
     def _check_nan(self, loss):
@@ -277,15 +277,6 @@ class Trainer(AbstractTrainer):
                     update_output = '██ ' + self.config['model'] + '--Best validation results updated!!!'
                     if verbose:
                         print(update_output)
-                    if saved:
-                        os.makedirs(self.config['checkpoint_dir'], exist_ok=True)
-                        save_path = os.path.join(self.config['checkpoint_dir'], f"{self.config['model']}_best.pth")
-                        torch.save({
-                            'epoch': epoch_idx,
-                            'model_state_dict': self.model.state_dict(),
-                            'best_valid_score': self.best_valid_score,
-                        }, save_path)
-                            
                             
                     self.best_valid_result = valid_result
                     self.best_test_upon_valid = test_result

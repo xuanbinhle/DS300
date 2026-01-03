@@ -11,6 +11,7 @@ def get_parser():
     parser.add_argument('--config_dir', type=str, required=True, help='Folder of configs')
     parser.add_argument('--vision_feature_file', type=str, default=None, help='Path to Feature Images')
     parser.add_argument('--text_feature_file', type=str, default=None, help='Path to Features Description Books')
+    parser.add_argument('--save_model', action='store_true', help='Whether to save the trained model')
     parser.add_argument('--do_train', action='store_true', help='Whether to perform training')
     return parser
 
@@ -23,7 +24,7 @@ def main(args):
     dataset = pd.read_csv(args.path_dataset)
     
     if args.do_train:
-        quick_start(model=args.model, dataset=dataset, config_dict=config_dict)
+        quick_start(model=args.model, dataset=dataset, config_dict=config_dict, saved=args.save_model)
     else:
         inference_quick_start(model=args.model, dataset=dataset, config_dict=config_dict)
 

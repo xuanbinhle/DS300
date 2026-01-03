@@ -29,7 +29,8 @@ class RecDataset(Dataset):
             self.df = df
         else:
             self.load_inter_graph(config['interation_filename'])
-            
+        
+        self.inter_num = len(self.df)
         self.item_num = self.df[self.iid_field].max() + 1
         self.user_num = self.df[self.uid_field].max() + 1
 
@@ -80,7 +81,6 @@ class RecDataset(Dataset):
     
     def __str__(self):
         info = []
-        self.inter_num = len(self.df)
         uni_u = pd.unique(self.df[self.uid_field])
         uni_i = pd.unique(self.df[self.iid_field])
         tmp_user_num, tmp_item_num = 0, 0

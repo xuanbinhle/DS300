@@ -17,14 +17,15 @@ import torch
 from tqdm import tqdm
 
 
-def inference_quick_start(model, dataset, config_dict, mg=False):
+def inference_quick_start(model, dataset, config_dict, user_id, mg=False):
     # load saved model
-    load_path = os.path.join('saved', f"{model.lower()}_best.pth")
-    checkpoint = torch.load(load_path, weights_only=False)
+    load_path = os.path.join('saved', f"{model}_best.pth")
+    checkpoint = torch.load(load_path, weights_only=False, map_location=torch.device('cpu'))
     config_dict.update(checkpoint['config'])
     
     config = Config(model, config_dict, mg)
-    
+    dataset = dataset[dataset['customer_index'] == user_id].reset_index(drop=True)
+
     # load data
     dataset = RecDataset(config, dataset)
     train_dataset, val_dataset, test_dataset = dataset.split()
@@ -33,8 +34,8 @@ def inference_quick_start(model, dataset, config_dict, mg=False):
     print('\n====Testing====\n' + str(test_dataset))
     
     # wrap into dataloader
-    train_data = TrainDataLoader(config, train_dataset, batch_size=config['train_batch_size'], shuffle=True)
-    test_data = EvalDataLoader(config, test_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size'])
+    train_data = TrainDataLoader(config, dataset, batch_size=config['train_batch_size'], shuffle=True)
+    test_data = EvalDataLoader(config, dataset, additional_dataset=dataset, batch_size=config['eval_batch_size'])
 
     # model loading and initialization
     model = get_model(config['model'])(config, train_data).to(config['device'])
@@ -45,8 +46,8 @@ def inference_quick_start(model, dataset, config_dict, mg=False):
     trainer = Trainer(config, model, mg)
 
     # model inference
-    test_result = trainer.inference(test_data)
-    print(test_result)
+    rec_list = trainer.inference(test_data)[user_id]
+    print(rec_list)
     raise
     print('Test result: {}'.format(dict2str(test_result)))
 

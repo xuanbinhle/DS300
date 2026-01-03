@@ -21,12 +21,12 @@ def main(args):
         'vision_feature_file': args.vision_feature_file,
         'text_feature_file': args.text_feature_file
     }
-    dataset = pd.read_csv(args.path_dataset)
+    dataframe = pd.read_csv(args.path_dataset)
     
     if args.do_train:
-        quick_start(model=args.model, dataset=dataset, config_dict=config_dict, saved=args.save_model)
+        quick_start(model=args.model, dataset=dataframe, config_dict=config_dict, saved=args.save_model)
     else:
-        inference_quick_start(model=args.model, dataset=dataset, config_dict=config_dict)
+        inference_quick_start(model=args.model, dataset=dataframe, config_dict=config_dict, user_id=0)
 
 if __name__ == '__main__':
     args = get_parser().parse_args(sys.argv[1:])

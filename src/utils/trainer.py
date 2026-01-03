@@ -325,10 +325,10 @@ class Trainer(AbstractTrainer):
             masked_items = batched_data[1]
             scores[masked_items[0], masked_items[1]] = -1e10
 
-            _, topk_index = torch.topk(scores, max(self.config['topk']), dim=-1)  # nusers x topk
+            topk_scores, topk_index = torch.topk(scores, max(self.config['topk']), dim=-1)  # nusers x topk
             batch_users = batched_data[0]
-            for u, items in zip(batch_users.cpu().tolist(), topk_index.cpu().tolist()):
-                user2items[u] = items
+            for u, scores_sim, items in zip(batch_users.cpu().tolist(), topk_scores.cpu().tolist(), topk_index.cpu().tolist()):
+                user2items[u] = [(item, sim) for item, sim in zip(items, scores_sim)]
         return user2items
     
     

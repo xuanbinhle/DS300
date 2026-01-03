@@ -22,21 +22,18 @@ def inference_quick_start(model, dataset, config_dict, user_id, mg=False):
     load_path = os.path.join('saved', f"{model}_best.pth")
     checkpoint = torch.load(load_path, weights_only=False, map_location=torch.device('cpu'))
     config_dict.update(checkpoint['config'])
+    config_dict['dataset_dir'] = './data/final' # Lúc save lưu path ./data/features nên lúc load phải đổi lại
     
     config = Config(model, config_dict, mg)
     dataset = dataset[dataset['customer_index'] == user_id].reset_index(drop=True)
 
     # load data
     dataset = RecDataset(config, dataset)
-    train_dataset, val_dataset, test_dataset = dataset.split()
-    print('\n====Training====\n' + str(train_dataset))
-    print('\n====Validation====\n' + str(val_dataset))
-    print('\n====Testing====\n' + str(test_dataset))
+    init_seed(config['seed'])
     
     # wrap into dataloader
     train_data = TrainDataLoader(config, dataset, batch_size=config['train_batch_size'], shuffle=True)
     test_data = EvalDataLoader(config, dataset, additional_dataset=dataset, batch_size=config['eval_batch_size'])
-
     # model loading and initialization
     model = get_model(config['model'])(config, train_data).to(config['device'])
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -47,9 +44,7 @@ def inference_quick_start(model, dataset, config_dict, user_id, mg=False):
 
     # model inference
     rec_list = trainer.inference(test_data)[user_id]
-    print(rec_list)
-    raise
-    print('Test result: {}'.format(dict2str(test_result)))
+    return rec_list
 
 
 def quick_start(model, dataset, config_dict, mg=False, saved=False):

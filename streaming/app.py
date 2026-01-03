@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 import os
 import shutil
+from src.utils.quick_start import inference_quick_start
+
+
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
@@ -65,6 +68,17 @@ def recommend_and_publish(batch_df, batch_id: int):
             desc_feat,
             user_id=int(user_id),
             similarity_name="Cosine"
+        )
+        
+        recs = inference_quick_start(
+            model="MMGCN",
+            dataset=temp_interaction_df,
+            config_dict={
+                'config_dir': "./src/configs",
+                'vision_feature_file': "image_feat_ResNet152.npy",
+                'text_feature_file': "text_descbook_feat_VisoBert.npy"
+            },
+            user_id=int(user_id)
         )
 
         rec_list = [int(item[0]) for item in recs[:10]]

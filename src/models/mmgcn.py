@@ -89,10 +89,11 @@ class MMGCN(GeneralRecommender):
         if not reps:
             raise RuntimeError("MMGCN.forward(): no modality features found (v_feat and t_feat are both None).")
 
-        if len(reps) == 2:
-            representation, _ = self.fusion(reps[0], reps[1])
-        else:
-            representation = sum(reps) / len(reps)
+        # if len(reps) == 2:
+        #     representation, _ = self.fusion(reps[0], reps[1])
+        # else:
+        #     
+        representation = sum(reps) / len(reps)
         self.result = representation
         return representation
 

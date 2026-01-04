@@ -1,3 +1,8 @@
+1. Report and Slides:
+Our report and slide are saved in [report](report).
+
+2. To build our application demo:
+
 Build the custom Spark image:
 
 ```bash

@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.recommender import GeneralRecommender
+from ..utils.recommender import GeneralRecommender
 
 
 class FREEDOM(GeneralRecommender):

@@ -9,8 +9,8 @@ VBPR: Visual Bayesian Personalized Ranking from Implicit Feedback -Ruining He, J
 
 import torch
 import torch.nn as nn
-from utils.recommender import GeneralRecommender
-from utils.compute_loss import BPRLoss, EmbLoss
+from ..utils.recommender import GeneralRecommender
+from ..utils.compute_loss import BPRLoss, EmbLoss
 import torch.nn.functional as F
 
 

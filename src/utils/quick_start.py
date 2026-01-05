@@ -6,11 +6,11 @@ Run application
 ##########################
 """
 from itertools import product
-from utils.dataset import RecDataset
-from utils.dataloader import TrainDataLoader, EvalDataLoader
-from utils.configurator import Config
-from utils.utils import init_seed, get_model, dict2str
-from utils.trainer import Trainer
+from .dataset import RecDataset
+from .dataloader import TrainDataLoader, EvalDataLoader
+from .configurator import Config
+from .utils import init_seed, get_model, dict2str
+from .trainer import Trainer
 import platform
 import os
 import torch

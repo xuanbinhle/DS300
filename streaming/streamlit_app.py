@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 from fastapi_sending import send_to_kafka_via_fastapi
 from fastapi_sending import get_to_kafka_via_fastapi
+import time
+
 
 FASTAPI_PRODUCER_URL = "http://localhost:8000/produce-message"
 FASTAPI_CONSUMER_URL = 'http://localhost:8001/drain?limit=10'
@@ -56,7 +58,13 @@ def get_book(book_id: str) -> Book:
     return next(b for b in BOOKS if b.id == book_id)
 
 def get_recommendations(FASTAPI_URL: str, k: int = 10) -> List[Book]:
-    list_product_index = get_to_kafka_via_fastapi(FASTAPI_URL)
+    # Không cần sleep ở đây vì get_to_kafka_via_fastapi đã tự động đợi
+    list_product_index = get_to_kafka_via_fastapi(FASTAPI_URL, max_wait_time=60)
+    
+    if not list_product_index:
+        st.warning("⚠ Không nhận được recommendations, hiển thị sách ngẫu nhiên")
+        return BOOKS[:k]
+    
     base = [b for b in BOOKS if b.product_index in list_product_index]
     return (base * 3)[:k]
 
@@ -162,13 +170,6 @@ def inject_css():
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
-        .view-more-btn {
-            color: #4da3ff;
-            cursor: pointer;
-            font-size: 13px;
-            margin-top: 4px;
-        }
         
         /* Star rating styles */
         .fa-star, .fa-star-half-alt {
@@ -193,7 +194,7 @@ def rating_star(rating):
     
     return star_string
 
-def book_tile(book: Book, key_prefix: str = ""):
+def book_tile(book: Book, key_prefix: str = "", show_button: bool = True):
     with st.container():
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.image(book.cover_url, use_container_width=True)
@@ -204,13 +205,15 @@ def book_tile(book: Book, key_prefix: str = ""):
             st.markdown(f"**{book.title}**")
         st.markdown(f"<span class='pill'>{rating_star(book.rating)} {book.rating:.1f}</span>", unsafe_allow_html=True)
         st.markdown(f"<span class='price'>{(book.price).replace('$','')}₫</span>", unsafe_allow_html=True)
-        if st.button("View", key=f"{key_prefix}view_{book.id}", use_container_width=True):
-            st.session_state["selected_book_id"] = book.id
-            try:
-                send_to_kafka_via_fastapi(book.product_index, FASTAPI_PRODUCER_URL)
-                # st.success(resp.get("status", "Sent"))
-            except Exception as e:
-                st.error(f"Failed to send: {e}")
+        
+        if show_button:
+            if st.button("View", key=f"{key_prefix}view_{book.id}", use_container_width=True):
+                st.session_state["selected_book_id"] = book.id
+                try:
+                    send_to_kafka_via_fastapi(book.product_index, FASTAPI_PRODUCER_URL)
+                    # st.success(resp.get("status", "Sent"))
+                except Exception as e:
+                    st.error(f"Failed to send: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
 
 # -----------------------------
@@ -310,4 +313,4 @@ with detail_col:
             rec_cols = st.columns(5, gap="medium")
             for i, rb in enumerate(recs[:10]):
                 with rec_cols[i % 5]:
-                    book_tile(rb, key_prefix="rec_")
+                    book_tile(rb, key_prefix="rec_", show_button=False)

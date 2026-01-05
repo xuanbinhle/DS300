@@ -21,10 +21,10 @@ def get_model(model_name: str):
         type: model class (e.g. <class models.mymodel.MyModel>)
     """
     # Import the package-level registry in models/__init__.py
-    package_path = "models"
+    package_path = "src.models"
     spec = importlib.util.find_spec(package_path)
     if spec is None:
-        raise ImportError("Cannot find package 'models'")
+        raise ImportError("Cannot find package 'src.models'")
 
     models_pkg = importlib.import_module(package_path)
 

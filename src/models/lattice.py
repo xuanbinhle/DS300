@@ -18,8 +18,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.recommender import GeneralRecommender
-from utils.utils import build_sim, compute_normalized_laplacian, build_knn_neighbourhood
+from ..utils.recommender import GeneralRecommender
+from ..utils.utils import build_sim, compute_normalized_laplacian, build_knn_neighbourhood
 
 
 class LATTICE(GeneralRecommender):

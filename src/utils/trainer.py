@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 
 from time import time
 
-from utils.utils import early_stopping, dict2str
-from utils.topk_evaluator import TopKEvaluator
+from .utils import early_stopping, dict2str
+from .topk_evaluator import TopKEvaluator
 
 
 class AbstractTrainer(object):

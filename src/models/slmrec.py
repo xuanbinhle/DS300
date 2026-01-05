@@ -9,7 +9,7 @@ import torch
 from torch import nn
 import numpy as np
 import scipy.sparse as sp
-from utils.recommender import GeneralRecommender
+from ..utils.recommender import GeneralRecommender
 
 ## Only visual + text features
 ##

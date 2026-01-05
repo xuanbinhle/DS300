@@ -14,7 +14,7 @@ import torch.nn.functional as F
 from torch_geometric.nn.conv import MessagePassing
 import torch_geometric
 
-from utils.recommender import GeneralRecommender
+from ..utils.recommender import GeneralRecommender
 
 
 class GatedFusion(nn.Module):

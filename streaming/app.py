@@ -1,12 +1,11 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, regexp_extract, to_json, struct, lit
-from model.content_based import get_recommendation_inference_cb
+from .model.content_based import get_recommendation_inference_cb
 import pandas as pd
 import numpy as np
 import os
 import shutil
 from src.utils.quick_start import inference_quick_start
-
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -63,12 +62,12 @@ def recommend_and_publish(batch_df, batch_id: int):
         temp_interaction_df.drop_duplicates(subset=['product_index', 'customer_index'], inplace=True)
         # print(temp_interaction_df)
 
-        recs = get_recommendation_inference_cb(
-            temp_interaction_df,
-            desc_feat,
-            user_id=int(user_id),
-            similarity_name="Cosine"
-        )
+        # recs = get_recommendation_inference_cb(
+        #     temp_interaction_df,
+        #     desc_feat,
+        #     user_id=int(user_id),
+        #     similarity_name="Cosine"
+        # )
         
         recs = inference_quick_start(
             model="MMGCN",
@@ -105,7 +104,7 @@ def recommend_and_publish(batch_df, batch_id: int):
 
 store_interactions_query = (df_parsed.writeStream
     .format("parquet")
-    .option("path", "./store/interactions")
+    .option("path", "./tmp/store/interactions")
     .option("checkpointLocation", "./tmp/chk_interactions")
     .outputMode("append")
     .start()

@@ -3,7 +3,7 @@ Our report and slide are saved in [report](report).
 
 # 2. To build our application demo:
 
-Build the custom Spark image:
+Build the custom Spark image
 
 ```bash
 docker build -t spark_test .
@@ -13,7 +13,7 @@ Run docker-compose service
 docker-compose up -d
 ```
 
-Activate Kafka, Spark
+Activate Kafka and Spark
 ```bash
 # Activate kafka-producer
 python fastapi_producer/main.py

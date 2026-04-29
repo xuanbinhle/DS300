@@ -1,0 +1,15 @@
+pytz
+requests
+selenium
+bs4
+tiktoken
+icecream
+scikit-learn
+transformers
+SentencePiece
+PyYAML
+langchain==0.3.27
+langchain-openai==0.3.35
+torch_geometric
+pandas
+matplotlib

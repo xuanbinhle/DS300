@@ -3,7 +3,7 @@ use_gpu: True
 seed: [42]
 
 # multi-modal raw features
-dataset_dir: './data/features/non_augmented'
+dataset_dir: './data/features/augmented'
 filter_out_cod_start_users: True
 is_multimodal_model: True
 

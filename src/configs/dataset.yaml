@@ -4,4 +4,4 @@ ITEM_ID_FIELD: product_index
 RATING_FIELD: rating
 
 filter_out_cod_start_users: True
-interation_filename: 'raw_interactions.csv'
+interation_filename: 'final_interactions.csv'

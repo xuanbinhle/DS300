@@ -17,24 +17,6 @@ import torch_geometric
 from utils.recommender import GeneralRecommender
 
 
-class GatedFusion(nn.Module):
-    def __init__(self, d_img: int, d_txt: int, d: int):
-        super().__init__()
-        self.proj_img = nn.Linear(d_img, d)
-        self.proj_txt = nn.Linear(d_txt, d)
-        self.gate = nn.Sequential(
-            nn.Linear(2 * d, d),
-            nn.Sigmoid()
-        )
-
-    def forward(self, v_img, v_txt):
-        v = self.proj_img(v_img)
-        t = self.proj_txt(v_txt)
-        g = self.gate(torch.cat([v, t], dim=-1))
-        h = g * t + (1 - g) * v
-        return h, g
-
-
 class MMGCN(GeneralRecommender):
     def __init__(self, config, dataset):
         super(MMGCN, self).__init__(config, dataset)
@@ -69,7 +51,6 @@ class MMGCN(GeneralRecommender):
 
         self.id_embedding = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x), requires_grad=True)).to(self.device)
         self.result = nn.init.xavier_normal_(torch.rand((num_user + num_item, dim_x))).to(self.device)
-        self.fusion = GatedFusion(d_img=dim_x, d_txt=dim_x, d=dim_x)
 
     def pack_edge_index(self, inter_mat):
         rows = inter_mat.row
@@ -88,11 +69,7 @@ class MMGCN(GeneralRecommender):
 
         if not reps:
             raise RuntimeError("MMGCN.forward(): no modality features found (v_feat and t_feat are both None).")
-
-        # if len(reps) == 2:
-        #     representation, _ = self.fusion(reps[0], reps[1])
-        # else:
-        #     
+    
         representation = sum(reps) / len(reps)
         self.result = representation
         return representation
